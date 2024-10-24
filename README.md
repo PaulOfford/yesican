@@ -11,7 +11,7 @@ A third possibility is to add a range indicator but quoting the range in laps an
 ## Intended Platform
 Raspberry Pi II running in a BMW 116i E87, connected to its CAN bus using a Korlan USB2CAN adapter.
 
-# Design Considerations
+## Design Considerations
 If we only needed a speed limiter and a shift indicator, a row of LEDs would be suitable, with a two way switch to change modes (speed limiter / gear shift) and a push button to cycle around pit speed limits.  However, a display would be much more flexible.  Although repurposing a phone for the display is attractive, this would increase the complexity of the solution.  Also, Motorsports UK regulations specify that we may not carry a phone in the car.
 
 Therefore, I think the components of the system will be:
