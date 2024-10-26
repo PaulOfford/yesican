@@ -3,8 +3,8 @@ import threading
 from yic_client import *
 from yic_gui import *
 from backend import *
-from js8call_driver import *
 from status import *
+from logging import *
 
 
 class MbClient:
@@ -25,10 +25,6 @@ class MbClient:
         self.be_t = threading.Thread(target=backend.backend_loop)
         self.be_t.start()
 
-        comms = Js8CallDriver(self.comms_tx_q, self.comms_rx_q)
-        self.comms_t = threading.Thread(target=comms.run_comms)
-        self.comms_t.start()
-
     def status_check(self):
         # we have had a message from the backend -> check for updated sections
         status = Status()
@@ -44,11 +40,11 @@ class MbClient:
 
         if status.cli_updated > status.last_checked:
             self.main.reload_cli()
-            logging.logmsg(4, "reload_cli()")
+            logmsg(4, "reload_cli()")
 
         if status.blogs_updated > status.last_checked:
             self.main.reload_blog_list()
-            logging.logmsg(4, "reload_blog_list()")
+            logmsg(4, "reload_blog_list()")
 
         status.update_last_checked()
 
@@ -56,7 +52,7 @@ class MbClient:
 
         try:
             msg: GuiMessage = self.b2f_q.get(block=False)  # if no msg waiting, this will throw an exception
-            logging.logmsg(3, f"frontend: {msg.cmd} {msg.param}")
+            logmsg(3, f"frontend: {msg.cmd} {msg.param}")
             self.status_check()
             self.b2f_q.task_done()
         except queue.Empty:
@@ -71,14 +67,6 @@ class MbClient:
         be_sig.set_op('exit')
         self.f2b_q.put(be_sig)
 
-        comms_sig = CommsMessage()
-        comms_sig.set_ts(time.time())
-        comms_sig.set_direction('tx')
-        comms_sig.set_typ('control')
-        comms_sig.set_target('set')
-        comms_sig.set_obj('exit')
-        self.comms_tx_q.put(comms_sig)
-
         self.comms_t.join(1)  # wait for up to one second for the comms thread to exit
         self.be_t.join(1)  # wait for up to one second for the backend thread to exit
 
@@ -90,7 +78,7 @@ class MbClient:
         req.set_frequency(freq)
         req.set_ts()
         self.f2b_q.put(req)
-        logging.logmsg(3, f"fe: {req}")
+        logmsg(3, f"fe: {req}")
 
         pass
 
