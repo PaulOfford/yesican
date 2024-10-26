@@ -9,104 +9,23 @@ from logging import *
 
 class MbClient:
 
-    last_check_for_updates = 0
-    f2b_q = queue.Queue(maxsize=20)  # queue for messages from the frontend to the backend
-    b2f_q = queue.Queue(maxsize=20)  # queue for messages to the frontend from the backend
-    comms_tx_q = queue.Queue(maxsize=20)  # queue for messages from the backend to the comms driver
-    comms_rx_q = queue.Queue(maxsize=20)  # queue for messages to the backend from the comms driver
+    backend = None  # we need access to the backend object to retrieve CAN data
     be_t = None  # thread anchor
-    comms_t = None  # thread anchor
-    header = None
-    main = None
 
     def __init__(self):
         # start backend thread
-        backend = Backend(self.f2b_q, self.b2f_q, self.comms_tx_q, self.comms_rx_q)
-        self.be_t = threading.Thread(target=backend.backend_loop)
+        self.backend = Backend()
+        self.be_t = threading.Thread(target=self.backend.backend_loop)
         self.be_t.start()
 
-    def status_check(self):
-        # we have had a message from the backend -> check for updated sections
-        status = Status()
-
-        if status.hdr_updated > status.last_checked:
-            self.header.reload_header()
-
-        if status.latest_updated > status.last_checked:
-            self.main.reload_latest()
-
-        if status.qso_updated > status.last_checked:
-            self.main.reload_qso_box()
-
-        if status.cli_updated > status.last_checked:
-            self.main.reload_cli()
-            logmsg(4, "reload_cli()")
-
-        if status.blogs_updated > status.last_checked:
-            self.main.reload_blog_list()
-            logmsg(4, "reload_blog_list()")
-
-        status.update_last_checked()
-
-    def process_updates(self):
-
-        try:
-            msg: GuiMessage = self.b2f_q.get(block=False)  # if no msg waiting, this will throw an exception
-            logmsg(3, f"frontend: {msg.cmd} {msg.param}")
-            self.status_check()
-            self.b2f_q.task_done()
-        except queue.Empty:
-            pass
-
-        root.after(200, self.process_updates)
-
     def client_shutdown(self):
-        be_sig = GuiMessage()
-        be_sig.set_cmd('X')
-        be_sig.set_cli_input('MB Client Shutdown')
-        be_sig.set_op('exit')
-        self.f2b_q.put(be_sig)
+        # ToDo: need to signal to the backend to stop
 
-        self.comms_t.join(1)  # wait for up to one second for the comms thread to exit
         self.be_t.join(1)  # wait for up to one second for the backend thread to exit
 
         root.destroy()
 
-    def set_frequency(self, freq):
-        req = GuiMessage()
-        req.set_cmd('S')
-        req.set_frequency(freq)
-        req.set_ts()
-        self.f2b_q.put(req)
-        logmsg(3, f"fe: {req}")
-
-        pass
-
     def run_client(self):
-
-        # set up the menu bar
-        top_menu = tk.Menu(root)
-        root.config(menu=top_menu)
-
-        file_menu = tk.Menu(top_menu)
-        top_menu.add_cascade(label='File', menu=file_menu)
-        file_menu.add_command(label='Settings    F2', command=lambda:settings_window())
-        file_menu.add_separator()
-        file_menu.add_command(label='Exit', command=self.client_shutdown)
-
-        band_menu = tk.Menu(top_menu)
-        top_menu.add_cascade(label='Band', menu=band_menu)
-        band_menu.add_command(label='160m:   1.842 000 MHz', command=ft.partial(self.set_frequency, 1842000))
-        band_menu.add_command(label='80m:    3.578 000 MHz', command=ft.partial(self.set_frequency, 3578000))
-        band_menu.add_command(label='40m:    7.708 000 MHz', command=ft.partial(self.set_frequency, 7078000))
-        band_menu.add_command(label='30m:    10.130 000 MHz', command=ft.partial(self.set_frequency, 10130000))
-        band_menu.add_command(label='20m:    14.078 000 MHz', command=ft.partial(self.set_frequency, 14078000))
-        band_menu.add_command(label='17m:    18.104 000 MHz', command=ft.partial(self.set_frequency, 18104000))
-        band_menu.add_command(label='15m:    21.078 000 MHz', command=ft.partial(self.set_frequency, 21078000))
-        band_menu.add_command(label='12m:    24.922 000 MHz', command=ft.partial(self.set_frequency, 24922000))
-        band_menu.add_command(label='10m:    28.078 000 MHz', command=ft.partial(self.set_frequency, 28078000))
-        band_menu.add_command(label='6m:     50.318 000 MHz', command=ft.partial(self.set_frequency, 50318000))
-        band_menu.add_command(label='2m:     144.178 000 MHz', command=ft.partial(self.set_frequency, 144178000))
 
         # we need to ensure closing the window stops the backend
         root.protocol("WM_DELETE_WINDOW", self.client_shutdown)
