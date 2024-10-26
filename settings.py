@@ -1,5 +1,4 @@
 import time
-from db_table import *
 
 
 class Settings:
@@ -7,7 +6,7 @@ class Settings:
     startup_width = None
     startup_height = None
     startup_dimensions = None
-    font_size = None
+    font_size = 14
     max_latest = None
     max_qsos = None
     max_blogs = None
@@ -15,10 +14,6 @@ class Settings:
     use_gmt = 1
 
     settings_table = None
-
-    def __init__(self):
-        self.settings_table = DbTable('settings')
-        self.reload_settings()
 
     def get_setting(self, name):
         db_values = self.settings_table.select(

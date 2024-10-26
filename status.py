@@ -1,5 +1,4 @@
 import time
-from db_table import *
 
 
 class Status:
@@ -47,49 +46,25 @@ class Status:
         self.selected_station = db_values['selected_station']
 
     def update_last_checked(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'last_checked': time.time()})
-        self.reload_status()
+        pass
 
     def set_selected_blog(self, blog: str, station: str):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'selected_blog': blog})
-        status_table.update(value_dictionary={'selected_station': station})
-        self.reload_status()
+        pass
 
     def set_hdr_updated(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'hdr_updated': time.time()})
-        self.reload_status()
+        pass
 
     def set_latest_updated(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'latest_updated': time.time()})
-        self.reload_status()
+        pass
 
     def set_qso_updated(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'qso_updated': time.time()})
-        self.reload_status()
+        pass
 
     def set_cli_updated(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'cli_updated': time.time()})
-        self.reload_status()
+        pass
 
     def set_blogs_updated(self):
-        status_table = DbTable('status')
-        status_table.update(value_dictionary={'blogs_updated': time.time()})
-        self.reload_status()
+        pass
 
     def set_current_blog(self, blog: str, station: str, frequency: int):
-        status_table = DbTable('status')
-        status_table.update(
-            value_dictionary={
-                'selected_blog': blog,
-                'selected_station': station,
-                'user_frequency': frequency,
-                'radio_frequency': frequency
-            }
-        )
-        self.set_blogs_updated()
+        pass
