@@ -18,6 +18,7 @@ class PitSpeedWindow(tk.Frame):
 
 class MainWindow:
     def __init__(self, master):
+        self.myRoot = master
         mainframe = tk.Frame(master)
         mainframe.pack(fill='both', expand=1)
         self.index = 0
@@ -25,11 +26,11 @@ class MainWindow:
         self.frameList = [GearShiftWindow(mainframe), PitSpeedWindow(mainframe)]
         self.frameList[1].forget()
 
-        bottomframe = tk.Frame(master)
-        bottomframe.pack(padx=10, pady=10)
-
-        switch = tk.Button(bottomframe, text='Switch', command=self.changeWindow)
-        switch.pack(padx=10, pady=10)
+        # bottomframe = tk.Frame(master)
+        # bottomframe.pack(padx=10, pady=10)
+        #
+        # switch = tk.Button(bottomframe, text='Switch', command=self.changeWindow)
+        # switch.pack(padx=10, pady=10)
 
     def changeWindow(self):
         self.frameList[self.index].forget()
@@ -37,11 +38,16 @@ class MainWindow:
         self.frameList[self.index].tkraise()
         self.frameList[self.index].pack(padx=10, pady=10)
 
+    def checkSwitch(self):
+        self.changeWindow()
+        self.myRoot.after(1000, self.checkSwitch)
+
 if __name__ == "__main__":
     settings = Settings()
 
     root = tk.Tk()
     window = MainWindow(root)
+    root.after(1000, window.checkSwitch)
     root.mainloop()
 
     # while True:
