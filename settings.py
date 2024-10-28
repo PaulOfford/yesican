@@ -13,6 +13,7 @@ class Settings:
 
     led_radius = 16
     led_clr = ["#00FF00", "yellow", "red"]
+    no_of_leds = 11
 
     shift_screen_title = "Gear"
     shift_triggers = [
