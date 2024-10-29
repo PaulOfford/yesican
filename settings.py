@@ -10,6 +10,8 @@ class Settings:
     bg_color = "#595959"
     led_off_color = 'white'
     default_gear_color = 'white'
+    default_speed_color = default_gear_color
+    default_blk_color = bg_color
 
     led_radius = 16
     led_clr = ["#00FF00", "yellow", "red"]
@@ -34,6 +36,9 @@ class Settings:
 
     pit_screen_title = "Pit Speed"
     pit_triggers = [
-        # tuplet (trigger kph, led_colour, flash)
-        (46, led_clr[0], False), (48, led_clr[1], False), (50, led_clr[2], False), (51, led_clr[2], True)
+        # trigger kph, which blocks to light, block colour, flash, speed text color
+        {'speed': 46, 'blks': [0, 4], 'blk_color': led_clr[0], 'flash': False, 'speed_color': default_speed_color},
+        {'speed': 48, 'blks': [1, 3], 'blk_color': led_clr[1], 'flash': False, 'speed_color': default_speed_color},
+        {'speed': 50, 'blks': [2], 'blk_color': led_clr[2], 'flash': False, 'speed_color': led_clr[2]},
+        {'speed': 51, 'blks': [2], 'blk_color': led_clr[2], 'flash': True, 'speed_color': led_clr[2]}
     ]
