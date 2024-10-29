@@ -17,15 +17,17 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
     return canvas.create_oval(x0, y0, x1, y1, outline=color, fill=color)
 
 
-class GuiGearShift:
+class GuiGearShift(tk.Frame):
 
     settings = Settings()
 
-    my_root = None
+    # my_root = None
     my_canvas = None
 
     sv_rpm = None
     sv_gear = None
+
+    gear_value = None
 
     screen_title = None
     shift_lights = None
@@ -33,25 +35,21 @@ class GuiGearShift:
     rpm_label = None
     config_button = None
 
-    # for testing only
-    toggle = 0
-    destroy_frame = False
-
-    def __init__(self, window_root):
-        self.my_root = window_root
+    def __init__(self, parent):
+        super().__init__(parent)
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
 
     def led_color(self, led_index: int, rpm: int) -> str:
         color = self.settings.led_off_color  # this is the default if the light is not on
 
-        trigger  = self.settings.shift_triggers[led_index]
+        trigger = self.settings.shift_triggers[led_index]
         if rpm >= trigger['rpm']:
-            color =  trigger['led']
+            color = trigger['led']
 
         return color
 
-    def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame], rpm: int) -> tk.Canvas:
+    def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
         radius = self.settings.led_radius
         self.my_canvas = tk.Canvas(
             container, bg=self.settings.bg_color,
@@ -61,10 +59,11 @@ class GuiGearShift:
         offset = 2.5 * radius
         xpos = (self.settings.screen_width / 2) - (5 * offset)
         ypos = 2 * radius
-        i = 0
 
         for i in range(0, self.settings.no_of_leds):
-            self.led.append( create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, self.settings.led_off_color) )
+            self.led.append(
+                create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, self.settings.led_off_color)
+            )
 
         return self.my_canvas
 
@@ -75,20 +74,12 @@ class GuiGearShift:
                 gear_text_color = trigger['gear_color']
         return gear_text_color
 
-    def switch_toggle(self):
-        self.toggle += 1
-        if self.toggle > 25:
-            self.my_root.destroy()
-            return True
-        else:
-            return False
-
     def update_rpm_gauge(self):
         global eng_rpm
         if eng_rpm > 7100 or eng_rpm < 850:
             eng_rpm = 850
         else:
-            eng_rpm +=250
+            eng_rpm += 250
         self.sv_rpm.set(str(eng_rpm))
 
     def update_shift_lights(self):
@@ -104,14 +95,12 @@ class GuiGearShift:
         # self.gear_value.configure(fg=self.gear_color(rpm=eng_rpm))
 
     def process_updates(self):
-        if self.switch_toggle():
-            return
         self.update_rpm_gauge()
         self.update_shift_lights()
         self.update_gear_gauge()
-        self.my_root.after(500, self.process_updates)
+        self.after(500, self.process_updates)
 
-    def render_screen(self, sv_gear, sv_rpm):
+    def render_screen(self):
         global eng_rpm
         global pre_calc_gear
 
@@ -120,19 +109,19 @@ class GuiGearShift:
 
         # widgets
         self.screen_title = tk.Label(
-            self.my_root, text=self.settings.shift_screen_title,
+            self, text=self.settings.shift_screen_title,
             width=20, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
         )
-        self.shift_lights = self.populate_shift_leds(container=self.my_root, rpm=eng_rpm)
+        self.shift_lights = self.populate_shift_leds(container=self)
 
         self.gear_value = tk.Label(
-            self.my_root, textvariable=self.sv_gear,
+            self, textvariable=self.sv_gear,
             fg=self.gear_color(eng_rpm), bg=self.settings.bg_color, font=font_gear
         )
 
         self.sv_rpm.set(str(eng_rpm))
         self.rpm_label = tk.Label(
-            self.my_root, textvariable=self.sv_rpm, fg="white", bg=self.settings.bg_color, font=font_title
+            self, textvariable=self.sv_rpm, fg="white", bg=self.settings.bg_color, font=font_title
         )
 
         # place the config button
@@ -141,17 +130,17 @@ class GuiGearShift:
         img_path = os.path.join(current_dir, img_file_name)  # join with your image's file name
         cog_icon = tk.PhotoImage(file=img_path)
         self.config_button = tk.Button(
-            self.my_root, image=cog_icon, width=48, height=48, bg=self.settings.bg_color, bd=0
+            self, image=cog_icon, width=48, height=48, bg=self.settings.bg_color, bd=0
         )
 
         # define grid
-        self.my_root.columnconfigure(0, weight=1)
-        self.my_root.columnconfigure(1, weight=1)
-        self.my_root.columnconfigure(2, weight=1)
-        self.my_root.rowconfigure(0, weight=1)
-        self.my_root.rowconfigure(1, weight=1)
-        self.my_root.rowconfigure(2, weight=1)
-        self.my_root.rowconfigure(3, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
 
         self.screen_title.grid(row=0, column=0, columnspan=3)
         self.shift_lights.grid(row=1, column=0, columnspan=3)
@@ -173,6 +162,8 @@ class GuiPitSpeed:
     sv_rpm = None
     sv_gear = None
 
+    gear_value = None
+
     screen_title = None
     shift_lights = None
     led = []
@@ -187,13 +178,13 @@ class GuiPitSpeed:
     def led_color(self, led_index: int, rpm: int) -> str:
         color = self.settings.led_off_color  # this is the default if the light is not on
 
-        trigger  = self.settings.shift_triggers[led_index]
+        trigger = self.settings.shift_triggers[led_index]
         if rpm >= trigger['rpm']:
-            color =  trigger['led']
+            color = trigger['led']
 
         return color
 
-    def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame], rpm: int) -> tk.Canvas:
+    def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
         radius = self.settings.led_radius
         self.my_canvas = tk.Canvas(
             container, bg=self.settings.bg_color,
@@ -203,10 +194,11 @@ class GuiPitSpeed:
         offset = 2.5 * radius
         xpos = (self.settings.screen_width / 2) - (5 * offset)
         ypos = 2 * radius
-        i = 0
 
         for i in range(0, self.settings.no_of_leds):
-            self.led.append( create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, self.settings.led_off_color) )
+            self.led.append(
+                create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, self.settings.led_off_color)
+            )
 
         return self.my_canvas
 
@@ -217,20 +209,12 @@ class GuiPitSpeed:
                 gear_text_color = trigger['gear_color']
         return gear_text_color
 
-    def switch_toggle(self):
-        self.toggle += 1
-        if self.toggle > 25:
-            self.my_root.destroy()
-            return True
-        else:
-            return False
-
     def update_rpm_gauge(self):
         global eng_rpm
         if eng_rpm > 7100 or eng_rpm < 850:
             eng_rpm = 850
         else:
-            eng_rpm +=250
+            eng_rpm += 250
         self.sv_rpm.set(str(eng_rpm))
 
     def update_shift_lights(self):
@@ -251,7 +235,7 @@ class GuiPitSpeed:
         self.update_gear_gauge()
         self.my_root.after(500, self.process_updates)
 
-    def render_screen(self, sv_gear, sv_rpm):
+    def render_screen(self):
         global eng_rpm
         global pre_calc_gear
 
@@ -263,7 +247,7 @@ class GuiPitSpeed:
             self.my_root, text=self.settings.pit_screen_title,
             width=20, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
         )
-        self.shift_lights = self.populate_shift_leds(container=self.my_root, rpm=eng_rpm)
+        self.shift_lights = self.populate_shift_leds(container=self.my_root)
 
         self.gear_value = tk.Label(
             self.my_root, textvariable=self.sv_gear,

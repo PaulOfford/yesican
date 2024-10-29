@@ -5,9 +5,7 @@ import tkinter as tk
 class GearShiftWindow(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        # tk.Label(self, text="Gear Shift").pack(padx=10, pady=10)
-        gsFrame = GuiGearShift(self)
-        gsFrame.process_updates()
+        tk.Label(self, text="Gear Shift").pack(padx=10, pady=10)
         self.pack(padx=10, pady=10)
 
 

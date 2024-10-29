@@ -22,3 +22,12 @@ Therefore, I think the components of the system will be:
 * DB9 socket wired into the P-CAN (100 kbps)
 * Display
 * Cigarette lighter to USB adapter and cable to connect into the Pi
+
+## tkinter Structure
+
+* root
+  * window
+      - mainframe
+          - framelist
+              - GearShiftWindow
+              - PitSpeedWindow
