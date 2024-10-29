@@ -101,7 +101,7 @@ class GuiGearShift:
         global pre_calc_gear
         global eng_rpm
         self.sv_gear.set(str(pre_calc_gear))
-        self.gear_value.configure(fg=self.gear_color(rpm=eng_rpm))
+        # self.gear_value.configure(fg=self.gear_color(rpm=eng_rpm))
 
     def process_updates(self):
         if self.switch_toggle():

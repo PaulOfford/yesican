@@ -5,7 +5,9 @@ import tkinter as tk
 class GearShiftWindow(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        tk.Label(self, text="Gear Shift").pack(padx=10, pady=10)
+        # tk.Label(self, text="Gear Shift").pack(padx=10, pady=10)
+        gsFrame = GuiGearShift(self)
+        gsFrame.process_updates()
         self.pack(padx=10, pady=10)
 
 
@@ -20,6 +22,7 @@ class MainWindow:
     def __init__(self, master):
         self.myRoot = master
         mainframe = tk.Frame(master)
+        mainframe.configure(bg=settings.bg_color)
         mainframe.pack(fill='both', expand=1)
         self.index = 0
 
@@ -46,6 +49,8 @@ if __name__ == "__main__":
     settings = Settings()
 
     root = tk.Tk()
+    root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
+    root.configure(bg=settings.bg_color)
     window = MainWindow(root)
     root.after(1000, window.checkSwitch)
     root.mainloop()
