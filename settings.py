@@ -15,7 +15,7 @@ class Settings:
     led_clr = ["#00FF00", "yellow", "red"]
     no_of_leds = 11
 
-    shift_screen_title = "Gear"
+    shift_screen_title = "Gear Shift"
     shift_triggers = [
         # tuplet (trigger rpm, led_colour, flash)
         {'rpm': 4500, 'led': led_clr[0], 'flash': False, 'gear_color': default_gear_color},

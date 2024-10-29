@@ -1,12 +1,6 @@
 from gui import *
 import tkinter as tk
-
-
-class GearShiftWindow(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Gear Shift").pack(padx=10, pady=10)
-        self.pack(padx=10, pady=10)
+import shared_memory
 
 
 class PitSpeedWindow(tk.Frame):
@@ -18,30 +12,31 @@ class PitSpeedWindow(tk.Frame):
 
 class MainWindow:
     def __init__(self, master):
-        self.myRoot = master
         mainframe = tk.Frame(master)
-        mainframe.configure(bg=settings.bg_color)
-        mainframe.pack(fill='both', expand=1)
+        mainframe.configure(bg=settings.bg_color, borderwidth=0)
+        mainframe.pack()
         self.index = 0
 
-        self.frameList = [GearShiftWindow(mainframe), PitSpeedWindow(mainframe)]
+        self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe)]
         self.frameList[1].forget()
 
-        # bottomframe = tk.Frame(master)
-        # bottomframe.pack(padx=10, pady=10)
-        #
-        # switch = tk.Button(bottomframe, text='Switch', command=self.changeWindow)
-        # switch.pack(padx=10, pady=10)
+    def change_window(self):
+        global current_mode
+        global desired_mode
 
-    def changeWindow(self):
         self.frameList[self.index].forget()
         self.index = (self.index + 1) % len(self.frameList)
         self.frameList[self.index].tkraise()
-        self.frameList[self.index].pack(padx=10, pady=10)
+        self.frameList[self.index].pack()
 
-    def checkSwitch(self):
-        self.changeWindow()
-        self.myRoot.after(1000, self.checkSwitch)
+        shared_memory.current_mode = shared_memory.desired_mode
+
+
+    def check_switch(self, master):
+        if shared_memory.current_mode != shared_memory.desired_mode:
+            self.change_window()
+        master.after(100, lambda: self.check_switch(master))
+
 
 if __name__ == "__main__":
     settings = Settings()
@@ -50,7 +45,7 @@ if __name__ == "__main__":
     root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
     root.configure(bg=settings.bg_color)
     window = MainWindow(root)
-    root.after(1000, window.checkSwitch)
+    root.after(10000, lambda: window.check_switch(root))
     root.mainloop()
 
     # while True:
