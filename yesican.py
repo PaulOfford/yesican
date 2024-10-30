@@ -13,9 +13,10 @@ class MainWindow:
         mainframe.configure(bg=settings.bg_color, borderwidth=0)
         mainframe.pack()
 
-        self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe)]
+        self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe), GuiConfig(mainframe)]
         shared_memory.no_of_modes = len(self.frameList)
-        self.frameList[1].forget()
+        for i in range(1,shared_memory.no_of_modes):
+            self.frameList[i].forget()
         self.blank_display = GuiBlank(mainframe)
         self.blank_display.forget()
 

@@ -1,5 +1,3 @@
-import os
-import pathlib
 from typing import Union
 import tkinter as tk
 import tkinter.font as font
@@ -19,6 +17,10 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
 
 def next_display() -> None:
     shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
+
+
+def quit_yesican():
+    exit(0)
 
 
 class GuiBlank(tk.Frame):
@@ -299,3 +301,115 @@ class GuiPitSpeed(tk.Frame):
         self.pack()
 
 
+class GuiConfig(tk.Frame):
+
+    settings = Settings()
+
+    # speed_correction_factor equals real speed / dashboard (ECU) speed
+    # and corrects for the situation where the radius of the fitted tyres
+    # differs from that of the original tyres
+    speed_correction_factor = 151 / 160
+
+    speed_limit = 50  # kph - pit lane speed limit - default is 50
+
+    # gearing_factor is used in the calculation of current gear from corrected speed and rpm
+    # each entry represents a gear (starting from Neutral) has min and max kph per 1000 rpm
+    # set min as low as possible without overlapping with the previous gear to accommodate wheel spin
+    # default is BMW 116i E87 5 speed with Nankang NS-2R tyres
+    gearing_factor = [(0, 0), (1, 8), (9, 12), (13, 18), (19, 25), (26, 100)]
+
+    speed_blocks = None
+    blk = []
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.sv_speed = tk.StringVar()
+        self.render_screen()
+
+    def render_screen(self):
+        self.configure(bg=self.settings.bg_color, borderwidth=0)
+
+        font_title = font.Font(family='Ariel', size=(int(self.settings.base_font_size/4)), weight='normal')
+        font_inputs = font.Font(family='Ariel', size=int(self.settings.base_font_size*0.12), weight='normal')
+
+        # widgets
+        screen_title = tk.Label(
+            self, text=self.settings.config_screen_title,
+            width=self.settings.screen_width, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
+        )
+
+        speed_limit = tk.Label(
+            self, text="Pit Lane Speed Limit (kph):",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        fullscreen = tk.Label(
+            self, text="Fullscreen Mode:",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        version = tk.Label(
+            self, text=__version__,
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank3 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank4 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank5 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank6 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank7 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        blank8 = tk.Label(
+            self, text=" ",
+            fg='white', bg=self.settings.bg_color, font=font_inputs
+        )
+
+        quit_button = tk.Button(self, text='Quit', command=quit_yesican)
+        next_button = tk.Button(self, text='Next', command=next_display)
+
+        # define grid
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
+        self.rowconfigure(4, weight=1)
+        self.rowconfigure(5, weight=1)
+        self.rowconfigure(6, weight=1)
+
+        screen_title.grid(row=0, column=0, columnspan=3, padx=10)
+        speed_limit.grid(row=1, column=0, sticky='w', padx=10, pady=5)
+        fullscreen.grid(row=2, column=0, sticky='w', padx=10, pady=5)
+        blank3.grid(row=3, column=0, sticky='w', padx=10, pady=5)
+        blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
+        blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
+        blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
+        blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
+        blank8.grid(row=8, column=0, sticky='w', padx=10, pady=5)
+        quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
+        # version.grid(row=3, column=1)
+        next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)
+
+        # pack this frame with the content above
+        self.pack()

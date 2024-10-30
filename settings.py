@@ -42,3 +42,5 @@ class Settings:
         {'speed': 50, 'blks': [2], 'blk_color': led_clr[2], 'flash': False, 'speed_color': led_clr[2]},
         {'speed': 51, 'blks': [2], 'blk_color': led_clr[2], 'flash': True, 'speed_color': led_clr[2]}
     ]
+
+    config_screen_title = "Configuration"
