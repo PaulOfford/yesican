@@ -3,27 +3,23 @@ import tkinter as tk
 import shared_memory
 
 
-class PitSpeedWindow(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Pit Speed").pack(padx=10, pady=10)
-        self.pack(padx=10, pady=10)
-
-
 class MainWindow:
+
+    index = 0
+    visible = True
+
     def __init__(self, master):
         mainframe = tk.Frame(master)
         mainframe.configure(bg=settings.bg_color, borderwidth=0)
         mainframe.pack()
-        self.index = 0
 
         self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe)]
+        shared_memory.no_of_modes = len(self.frameList)
         self.frameList[1].forget()
+        self.blank_display = GuiBlank(mainframe)
+        self.blank_display.forget()
 
     def change_window(self):
-        global current_mode
-        global desired_mode
-
         self.frameList[self.index].forget()
         self.index = (self.index + 1) % len(self.frameList)
         self.frameList[self.index].tkraise()
@@ -31,21 +27,43 @@ class MainWindow:
 
         shared_memory.current_mode = shared_memory.desired_mode
 
+    def flash_window(self) -> None:
+        if shared_memory.eng_rpm >= 7000:
+            stop = True
+        if shared_memory.flash_window:
+            if self.visible:
+                self.frameList[self.index].forget()
+                self.blank_display.tkraise()  # assumes blank is last frame in the framelist
+                self.visible = False
+                self.blank_display.pack()
+            else:
+                self.blank_display.forget()  # assumes blank is last frame in the framelist
+                self.frameList[self.index].tkraise()
+                self.visible = True
+                self.frameList[self.index].pack()
+        else:
+            self.visible = True
+            self.blank_display.forget()
+            self.frameList[self.index].tkraise()
+            self.frameList[self.index].pack()
 
     def check_switch(self, master):
+        self.flash_window()
         if shared_memory.current_mode != shared_memory.desired_mode:
             self.change_window()
-        master.after(100, lambda: self.check_switch(master))
+        master.after(250, lambda: self.check_switch(master))
 
 
 if __name__ == "__main__":
     settings = Settings()
 
     root = tk.Tk()
+    # root.overrideredirect(True)
+    # root.wm_attributes('-fullscreen', 'True')
     root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
     root.configure(bg=settings.bg_color)
     window = MainWindow(root)
-    root.after(10000, lambda: window.check_switch(root))
+    root.after(100, lambda: window.check_switch(root))
     root.mainloop()
 
     # while True:

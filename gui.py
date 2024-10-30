@@ -18,43 +18,19 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
 
 
 def next_display() -> None:
-    shared_memory.desired_mode = (shared_memory.desired_mode + 1) % 3
+    shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
 
 
 class GuiBlank(tk.Frame):
 
     settings = Settings()
 
-    config_button = None
-
     def __init__(self, parent):
         super().__init__(parent)
         self.render_screen()
 
     def render_screen(self):
-        self.configure(
-            bg=self.settings.bg_color, borderwidth=0,
-            # width=self.settings.screen_width, height=self.settings.screen_height
-        )
-
-        self.config_button = tk.Button(self, text='Next', command=next_display)
-
-        # define grid
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
-
-        self.config_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
-
-        # pack this frame with the content above
         self.pack()
-
-        # self.my_root.after(200, self.process_updates)
-        # self.my_root.mainloop()
 
 
 class GuiGearShift(tk.Frame):
@@ -73,7 +49,7 @@ class GuiGearShift(tk.Frame):
     shift_lights = None
     led = []
     rpm_label = None
-    config_button = None
+    next_button = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -118,7 +94,7 @@ class GuiGearShift(tk.Frame):
 
     @staticmethod
     def sim_rpm():
-        if shared_memory.eng_rpm > 7100 or shared_memory.eng_rpm < 850:
+        if shared_memory.eng_rpm > 8000 or shared_memory.eng_rpm < 850:
             shared_memory.eng_rpm = 850
         else:
             shared_memory.eng_rpm += 250
@@ -130,15 +106,24 @@ class GuiGearShift(tk.Frame):
         for i, light in enumerate(self.led):
             self.my_canvas.itemconfigure(light, fill=self.led_color(i, shared_memory.eng_rpm))
 
+        # this code block handles flashing
+        shared_memory.flash_window = False  # default is to not flash the display
+        for trigger in reversed(self.settings.shift_triggers):
+            if shared_memory.eng_rpm >= trigger['rpm']:
+                shared_memory.flash_window = trigger['flash']
+                # now we've done that we don't want to look for further shift_triggers matches
+                break
+
     def update_gear_gauge(self):
         self.sv_gear.set(str(shared_memory.pre_calc_gear))
         self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
 
     def process_updates(self):
-        self.sim_rpm()
-        self.update_shift_lights()
-        self.update_gear_gauge()
-        self.update_rpm_gauge()
+        if shared_memory.current_mode == 0:
+            self.sim_rpm()
+            self.update_shift_lights()
+            self.update_gear_gauge()
+            self.update_rpm_gauge()
         self.after(250, self.process_updates)
 
     def render_screen(self):
@@ -164,16 +149,7 @@ class GuiGearShift(tk.Frame):
             self, textvariable=self.sv_rpm, fg="white", bg=self.settings.bg_color, font=font_title
         )
 
-        # place the config button
-        # img_file_name = r"images\settings-cogwheel-button-white.png"
-        # current_dir = pathlib.Path(__file__).parent.resolve()  # current directory
-        # img_path = os.path.join(current_dir, img_file_name)  # join with your image's file name
-        # cog_icon = tk.PhotoImage(file=img_path)
-        # self.config_button = tk.Button(
-        #     self, image=cog_icon, width=48, height=48, bg="red", bd=0
-        # )
-
-        self.config_button = tk.Button(self, text='Next', command=next_display)
+        self.next_button = tk.Button(self, text='Next', command=next_display)
 
         # define grid
         self.columnconfigure(0, weight=1)
@@ -188,7 +164,7 @@ class GuiGearShift(tk.Frame):
         self.shift_lights.grid(row=1, column=0, columnspan=3)
         self.gear_value.grid(row=2, column=0, columnspan=3)
         self.rpm_label.grid(row=3, column=0, sticky='sw', padx=5, pady=5)
-        self.config_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
+        self.next_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
 
         # pack this frame with the content above
         self.pack()
@@ -210,10 +186,8 @@ class GuiPitSpeed(tk.Frame):
     speed_value = None
     speed_color = settings.default_speed_color
 
-    screen_title = None
     speed_blocks = None
     blk = []
-    config_button = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -257,24 +231,34 @@ class GuiPitSpeed(tk.Frame):
         self.speed_value.configure(fg=self.speed_color)
 
     def update_speed_blocks(self):
+        # reset all the speed blocks
         for i, blk in enumerate(self.blk):
             self.my_canvas.itemconfigure(blk, fill=self.settings.default_blk_color)
 
+        self.speed_color = self.settings.default_speed_color  # set speed value color to default
         for trigger in reversed(self.settings.pit_triggers):
             if shared_memory.speed >= trigger['speed']:
                 for blk_offset in trigger['blks']:
                     self.my_canvas.itemconfigure(self.blk[blk_offset], fill=trigger['blk_color'])
                 # set the speed gauge color
                 self.speed_color = trigger['speed_color']
+                # now we've done that we don't want to look for further pit_triggers matches
                 break
 
-            else:
-                self.speed_color = self.settings.default_speed_color
+        # this code block handles flashing
+        shared_memory.flash_window = False  # default is to not flash the display
+        for trigger in reversed(self.settings.pit_triggers):
+            if shared_memory.speed >= trigger['speed']:
+                shared_memory.flash_window = trigger['flash']
+                # now we've done that we don't want to look for further shift_triggers matches
+                break
 
     def process_updates(self):
-        self.sim_speed()
-        self.update_speed_blocks()
-        self.update_speed_gauge()
+        # we only want to mess with the display if it is top of the stack
+        if shared_memory.current_mode == 1:
+            self.sim_speed()
+            self.update_speed_blocks()
+            self.update_speed_gauge()
         self.after(500, self.process_updates)
 
     def render_screen(self):
@@ -284,7 +268,7 @@ class GuiPitSpeed(tk.Frame):
         font_gear = font.Font(family='Ariel', size=int(self.settings.base_font_size*1.1), weight='normal')
 
         # widgets
-        self.screen_title = tk.Label(
+        screen_title = tk.Label(
             self, text=self.settings.pit_screen_title,
             width=20, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
         )
@@ -295,7 +279,7 @@ class GuiPitSpeed(tk.Frame):
             fg=self.speed_color, bg=self.settings.bg_color, font=font_gear
         )
 
-        self.config_button = tk.Button(self, text='Next', command=next_display)
+        next_button = tk.Button(self, text='Next', command=next_display)
 
         # define grid
         self.columnconfigure(0, weight=1)
@@ -306,10 +290,12 @@ class GuiPitSpeed(tk.Frame):
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=1)
 
-        self.screen_title.grid(row=0, column=0, columnspan=3)
+        screen_title.grid(row=0, column=0, columnspan=3)
         self.speed_blocks.grid(row=1, column=0, columnspan=3)
         self.speed_value.grid(row=2, column=0, columnspan=3)
-        self.config_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
+        next_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
 
         # pack this frame with the content above
         self.pack()
+
+

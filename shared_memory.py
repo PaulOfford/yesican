@@ -4,5 +4,8 @@ speed = 0
 
 pit_speed_limit = 50  # kph - this is a default setting
 
+no_of_modes = 2  # this is a default value that gets modified as soon as the code runs
 current_mode = 0  # 0 - Gear Shift, 1 - Pit Speed, 2 - Config
 desired_mode = 0
+
+flash_window = False
