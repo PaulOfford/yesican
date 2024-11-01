@@ -6,6 +6,8 @@
 class Settings:
     screen_width = 480
     screen_height = 320
+    fullscreen = 1  # 0 = off, 1 = on
+
     base_font_size = 96
     bg_color = "#595959"
     led_off_color = 'white'

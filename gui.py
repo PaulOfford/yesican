@@ -57,7 +57,7 @@ class GuiGearShift(tk.Frame):
         super().__init__(parent)
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
-        self.render_screen()
+        self.render_screen(parent)
         self.process_updates()
 
     def led_color(self, led_index: int, rpm: int) -> str:
@@ -128,7 +128,7 @@ class GuiGearShift(tk.Frame):
             self.update_rpm_gauge()
         self.after(250, self.process_updates)
 
-    def render_screen(self):
+    def render_screen(self, parent):
         self.configure(bg=self.settings.bg_color, borderwidth=0)
 
         font_title = font.Font(family='Ariel', size=(int(self.settings.base_font_size/4)), weight='normal')
@@ -157,10 +157,12 @@ class GuiGearShift(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
+
+        shared_memory.root.update()
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)  # 10% for title
+        self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)  # 25% for LEDs
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.50)  # 50% for gear number
+        self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 15% for footer
 
         self.screen_title.grid(row=0, column=0, columnspan=3)
         self.shift_lights.grid(row=1, column=0, columnspan=3)
@@ -287,10 +289,11 @@ class GuiPitSpeed(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
+        shared_memory.root.update()
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
+        self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.50)
+        self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
 
         screen_title.grid(row=0, column=0, columnspan=3)
         self.speed_blocks.grid(row=1, column=0, columnspan=3)
@@ -343,10 +346,21 @@ class GuiConfig(tk.Frame):
             fg='white', bg=self.settings.bg_color, font=font_inputs
         )
 
+        default_speed = tk.StringVar()
+        default_speed.set(str(shared_memory.pit_speed_limit))
+        speed_box = tk.Entry(self, textvariable=default_speed)
+
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
             fg='white', bg=self.settings.bg_color, font=font_inputs
         )
+
+        fs_status = tk.StringVar()
+        fullscreen_check_box = tk.Checkbutton(self, variable=fs_status, bg=self.settings.bg_color)
+        if self.settings.fullscreen == 1:
+            fullscreen_check_box.select()
+        else:
+            fullscreen_check_box.deselect()
 
         version = tk.Label(
             self, text=__version__,
@@ -399,8 +413,13 @@ class GuiConfig(tk.Frame):
         self.rowconfigure(6, weight=1)
 
         screen_title.grid(row=0, column=0, columnspan=3, padx=10)
-        speed_limit.grid(row=1, column=0, sticky='w', padx=10, pady=5)
-        fullscreen.grid(row=2, column=0, sticky='w', padx=10, pady=5)
+
+        speed_limit.grid(row=1, column=0, sticky='e', padx=10, pady=5)
+        speed_box.grid(row=1, column=1, sticky='w', padx=10, pady=5)
+
+        fullscreen.grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+
         blank3.grid(row=3, column=0, sticky='w', padx=10, pady=5)
         blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)

@@ -58,14 +58,14 @@ class MainWindow:
 if __name__ == "__main__":
     settings = Settings()
 
-    root = tk.Tk()
+    shared_memory.root = tk.Tk()
     # root.overrideredirect(True)
     # root.wm_attributes('-fullscreen', 'True')
-    root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
-    root.configure(bg=settings.bg_color)
-    window = MainWindow(root)
-    root.after(100, lambda: window.check_switch(root))
-    root.mainloop()
+    shared_memory.root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
+    shared_memory.root.configure(bg=settings.bg_color)
+    window = MainWindow(shared_memory.root)
+    shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
+    shared_memory.root.mainloop()
 
     # while True:
     #     gs_window = tk.Tk()
