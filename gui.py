@@ -299,7 +299,8 @@ class GuiPitSpeed(tk.Frame):
 
 class GuiConfig(tk.Frame):
 
-    fs_status = None
+    pit_speed = None  # StringVar
+    fs_status = None  # IntVar
 
     # speed_correction_factor equals real speed / dashboard (ECU) speed
     # and corrects for the situation where the radius of the fitted tyres
@@ -319,7 +320,8 @@ class GuiConfig(tk.Frame):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.sv_speed = tk.StringVar()
+        self.pit_speed = tk.StringVar()
+        self.fs_status = tk.IntVar()
         self.render_screen()
         self.process_updates()
 
@@ -345,9 +347,9 @@ class GuiConfig(tk.Frame):
             fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
-        default_speed = tk.StringVar()
-        default_speed.set(str(shared_memory.pit_speed_limit))
-        speed_box = tk.Entry(self, textvariable=default_speed)
+        self.pit_speed = tk.StringVar()
+        self.pit_speed.set(str(shared_memory.pit_speed_limit))
+        speed_box = tk.Entry(self, textvariable=self.pit_speed)
 
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
@@ -356,7 +358,10 @@ class GuiConfig(tk.Frame):
 
         self.fs_status = tk.IntVar()
         self.fs_status.set(shared_memory.settings.fullscreen)
-        fullscreen_check_box = tk.Checkbutton(self, variable=self.fs_status, bg=shared_memory.settings.bg_color)
+        fullscreen_check_box = tk.Checkbutton(
+            self, variable=self.fs_status, bg=shared_memory.settings.bg_color,
+            command= lambda: shared_memory.settings.set_fullscreen(self.fs_status.get())
+        )
 
         version = tk.Label(
             self, text=__version__,

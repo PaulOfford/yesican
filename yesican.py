@@ -1,5 +1,6 @@
-from gui import *
 import tkinter as tk
+from settings import *
+from gui import *
 import shared_memory
 
 
@@ -10,7 +11,7 @@ class MainWindow:
 
     def __init__(self, master):
         mainframe = tk.Frame(master)
-        mainframe.configure(bg=settings.bg_color, borderwidth=0)
+        mainframe.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
         mainframe.pack()
 
         self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe), GuiConfig(mainframe)]
@@ -56,37 +57,15 @@ class MainWindow:
 
 
 if __name__ == "__main__":
-    settings = Settings()
+    shared_memory.settings = Settings()
 
     shared_memory.root = tk.Tk()
     # root.overrideredirect(True)
     # root.wm_attributes('-fullscreen', 'True')
-    shared_memory.root.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
-    shared_memory.root.configure(bg=settings.bg_color)
+    shared_memory.root.geometry(
+        str(shared_memory.settings.screen_width) + "x" + str(shared_memory.settings.screen_height)
+    )
+    shared_memory.root.configure(bg=shared_memory.settings.bg_color)
     window = MainWindow(shared_memory.root)
     shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
     shared_memory.root.mainloop()
-
-    # while True:
-    #     gs_window = tk.Tk()
-    #     gs_window.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
-    #     gs_window.configure(bg=settings.bg_color)
-    #
-    #     sv_rpm = tk.StringVar()
-    #     sv_gear = tk.StringVar()
-    #
-    #     shift = GuiGearShift(window_root=gs_window)
-    #     shift.render_screen(sv_gear, sv_rpm)
-    #     gs_window.after(200, shift.process_updates)
-    #     gs_window.mainloop()
-    #
-    #     ps_window = tk.Tk()
-    #     ps_window.geometry(str(settings.screen_width) + "x" + str(settings.screen_height))
-    #     ps_window.configure(bg=settings.bg_color)
-    #
-    #     sv_speed = tk.StringVar()
-    #
-    #     pit = GuiPitSpeed(window_root=ps_window)
-    #     pit.render_screen(sv_gear, sv_rpm)
-    #     ps_window.after(200, shift.process_updates)
-    #     ps_window.mainloop()

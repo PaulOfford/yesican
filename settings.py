@@ -5,6 +5,8 @@
 import configparser
 
 class Settings:
+    config = None
+    
     screen_width = 480
     screen_height = 320
     fullscreen = 1  # 0 = off, 1 = on
@@ -61,22 +63,26 @@ class Settings:
 
     config_screen_title = "Configuration"
 
-    def read_config(self) -> None:
+    def __init__(self):
         # Create a ConfigParser object
-        config = configparser.ConfigParser()
+        self.config = configparser.ConfigParser()
 
+    def read_config(self) -> None:
         # Read the configuration file
-        config.read('config.ini')
+        self.config.read('config.ini')
 
         # Access values from the configuration file
-        self.screen_width = config.get('General', 'screen_width')
-        self.screen_height = config.get('General', 'screen_height')
-        self.fullscreen = config.get('General', 'fullscreen')
-        self.base_font_size = config.get('General', 'base_font_size')
-        self.bg_color = config.get('General', 'bg_color')
+        self.screen_width = self.config.get('General', 'screen_width')
+        self.screen_height = self.config.get('General', 'screen_height')
+        self.fullscreen = self.config.get('General', 'fullscreen')
+        self.base_font_size = self.config.get('General', 'base_font_size')
+        self.bg_color = self.config.get('General', 'bg_color')
 
         return
 
-    def set_fullscreen(self):
-        self.fullscreen = 1
+    def set_fullscreen(self, state: int) -> None:
+        self.config.set('General', 'fullscreen', str(state))
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+        self.config.close(f)
 
