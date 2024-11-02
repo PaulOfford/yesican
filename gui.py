@@ -4,7 +4,6 @@ import tkinter.font as font
 import shared_memory
 
 from _version import __version__
-from settings import *
 
 
 def create_circle(x, y, r, canvas, color):  # center coordinates, radius
@@ -25,8 +24,6 @@ def quit_yesican():
 
 class GuiBlank(tk.Frame):
 
-    settings = Settings()
-
     def __init__(self, parent):
         super().__init__(parent)
         self.render_screen()
@@ -37,9 +34,6 @@ class GuiBlank(tk.Frame):
 
 class GuiGearShift(tk.Frame):
 
-    settings = Settings()
-
-    # my_root = None
     my_canvas = None
 
     sv_rpm = None
@@ -57,39 +51,41 @@ class GuiGearShift(tk.Frame):
         super().__init__(parent)
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
-        self.render_screen(parent)
+        self.render_screen()
         self.process_updates()
 
-    def led_color(self, led_index: int, rpm: int) -> str:
-        color = self.settings.led_off_color  # this is the default if the light is not on
+    @staticmethod
+    def led_color(led_index: int, rpm: int) -> str:
+        color = shared_memory.settings.led_off_color  # this is the default if the light is not on
 
-        trigger = self.settings.shift_triggers[led_index]
+        trigger = shared_memory.settings.shift_triggers[led_index]
         if rpm >= trigger['rpm']:
             color = trigger['led']
 
         return color
 
     def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
-        radius = self.settings.led_radius
+        radius = shared_memory.settings.led_radius
         self.my_canvas = tk.Canvas(
-            container, bg=self.settings.bg_color,
-            height=(4 * radius), width=self.settings.screen_width,
+            container, bg=shared_memory.settings.bg_color,
+            height=(4 * radius), width=shared_memory.settings.screen_width,
             border=0, highlightthickness=0
         )
         offset = 2.5 * radius
-        xpos = (self.settings.screen_width / 2) - (5 * offset)
+        xpos = (shared_memory.settings.screen_width / 2) - (5 * offset)
         ypos = 2 * radius
 
-        for i in range(0, self.settings.no_of_leds):
+        for i in range(0, shared_memory.settings.no_of_leds):
             self.led.append(
-                create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, self.settings.led_off_color)
+                create_circle(xpos + (i * offset), ypos, radius, self.my_canvas, shared_memory.settings.led_off_color)
             )
 
         return self.my_canvas
 
-    def gear_color(self, rpm: int) -> str:
-        gear_text_color = self.settings.default_gear_color
-        for trigger in self.settings.shift_triggers:
+    @staticmethod
+    def gear_color(rpm: int) -> str:
+        gear_text_color = shared_memory.settings.default_gear_color
+        for trigger in shared_memory.settings.shift_triggers:
             if rpm >= trigger['rpm']:
                 gear_text_color = trigger['gear_color']
         return gear_text_color
@@ -110,7 +106,7 @@ class GuiGearShift(tk.Frame):
 
         # this code block handles flashing
         shared_memory.flash_window = False  # default is to not flash the display
-        for trigger in reversed(self.settings.shift_triggers):
+        for trigger in reversed(shared_memory.settings.shift_triggers):
             if shared_memory.eng_rpm >= trigger['rpm']:
                 shared_memory.flash_window = trigger['flash']
                 # now we've done that we don't want to look for further shift_triggers matches
@@ -128,27 +124,27 @@ class GuiGearShift(tk.Frame):
             self.update_rpm_gauge()
         self.after(250, self.process_updates)
 
-    def render_screen(self, parent):
-        self.configure(bg=self.settings.bg_color, borderwidth=0)
+    def render_screen(self):
+        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(self.settings.base_font_size/4)), weight='normal')
-        font_gear = font.Font(family='Ariel', size=int(self.settings.base_font_size*1.1), weight='normal')
+        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
+        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*1.1), weight='normal')
 
         # widgets
         self.screen_title = tk.Label(
-            self, text=self.settings.shift_screen_title,
-            width=20, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.shift_screen_title,
+            width=20, pady=12, fg='white', bg=shared_memory.settings.bg_color, font=font_title
         )
         self.shift_lights = self.populate_shift_leds(container=self)
 
         self.gear_value = tk.Label(
             self, textvariable=self.sv_gear,
-            fg=self.gear_color(shared_memory.eng_rpm), bg=self.settings.bg_color, font=font_gear
+            fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.bg_color, font=font_gear
         )
 
         self.sv_rpm.set(str(shared_memory.eng_rpm))
         self.rpm_label = tk.Label(
-            self, textvariable=self.sv_rpm, fg="white", bg=self.settings.bg_color, font=font_title
+            self, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.bg_color, font=font_title
         )
 
         self.next_button = tk.Button(self, text='Next', command=next_display)
@@ -179,16 +175,13 @@ class GuiGearShift(tk.Frame):
 
 class GuiPitSpeed(tk.Frame):
 
-    settings = Settings()
-
-    # my_root = None
     my_canvas = None
 
     # this will be a StringVar that we will use as a textvariable in a Label object
     sv_speed = None
 
     speed_value = None
-    speed_color = settings.default_speed_color
+    speed_color = shared_memory.settings.default_speed_color
 
     speed_blocks = None
     blk = []
@@ -200,26 +193,26 @@ class GuiPitSpeed(tk.Frame):
         self.process_updates()
 
     def create_gauge(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
-        radius = self.settings.led_radius
+        radius = shared_memory.settings.led_radius
         self.my_canvas = tk.Canvas(
-            container, bg=self.settings.bg_color,
-            height=(4 * radius), width=self.settings.screen_width,
+            container, bg=shared_memory.settings.bg_color,
+            height=(4 * radius), width=shared_memory.settings.screen_width,
             border=0, highlightthickness=0
         )
 
         blk_width = 80
         blk_height = 20
-        xstart = (self.settings.screen_width / 2) - (2.5 * blk_width)
+        xstart = (shared_memory.settings.screen_width / 2) - (2.5 * blk_width)
         ypos = 1 * blk_height
 
         for i in range(0, 5):
             xpos = xstart + (i * blk_width)
             self.blk.append(
                 self.my_canvas.create_rectangle(
-                    xpos, ypos, xpos + blk_width, ypos + blk_height, outline=self.settings.bg_color
+                    xpos, ypos, xpos + blk_width, ypos + blk_height, outline=shared_memory.settings.bg_color
                 )
             )
-            self.my_canvas.itemconfigure(self.blk[i], fill=self.settings.default_blk_color)
+            self.my_canvas.itemconfigure(self.blk[i], fill=shared_memory.settings.default_blk_color)
 
         return self.my_canvas
 
@@ -237,10 +230,10 @@ class GuiPitSpeed(tk.Frame):
     def update_speed_blocks(self):
         # reset all the speed blocks
         for i, blk in enumerate(self.blk):
-            self.my_canvas.itemconfigure(blk, fill=self.settings.default_blk_color)
+            self.my_canvas.itemconfigure(blk, fill=shared_memory.settings.default_blk_color)
 
-        self.speed_color = self.settings.default_speed_color  # set speed value color to default
-        for trigger in reversed(self.settings.pit_triggers):
+        self.speed_color = shared_memory.settings.default_speed_color  # set speed value color to default
+        for trigger in reversed(shared_memory.settings.pit_triggers):
             if shared_memory.speed >= trigger['speed']:
                 for blk_offset in trigger['blks']:
                     self.my_canvas.itemconfigure(self.blk[blk_offset], fill=trigger['blk_color'])
@@ -251,7 +244,7 @@ class GuiPitSpeed(tk.Frame):
 
         # this code block handles flashing
         shared_memory.flash_window = False  # default is to not flash the display
-        for trigger in reversed(self.settings.pit_triggers):
+        for trigger in reversed(shared_memory.settings.pit_triggers):
             if shared_memory.speed >= trigger['speed']:
                 shared_memory.flash_window = trigger['flash']
                 # now we've done that we don't want to look for further shift_triggers matches
@@ -266,21 +259,21 @@ class GuiPitSpeed(tk.Frame):
         self.after(500, self.process_updates)
 
     def render_screen(self):
-        self.configure(bg=self.settings.bg_color, borderwidth=0)
+        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(self.settings.base_font_size/4)), weight='normal')
-        font_gear = font.Font(family='Ariel', size=int(self.settings.base_font_size*1.1), weight='normal')
+        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
+        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*1.1), weight='normal')
 
         # widgets
         screen_title = tk.Label(
-            self, text=self.settings.pit_screen_title,
-            width=20, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.pit_screen_title,
+            width=20, pady=12, fg='white', bg=shared_memory.settings.bg_color, font=font_title
         )
         self.speed_blocks = self.create_gauge(container=self)
 
         self.speed_value = tk.Label(
             self, textvariable=self.sv_speed,
-            fg=self.speed_color, bg=self.settings.bg_color, font=font_gear
+            fg=self.speed_color, bg=shared_memory.settings.bg_color, font=font_gear
         )
 
         next_button = tk.Button(self, text='Next', command=next_display)
@@ -306,7 +299,7 @@ class GuiPitSpeed(tk.Frame):
 
 class GuiConfig(tk.Frame):
 
-    settings = Settings()
+    fs_status = None
 
     # speed_correction_factor equals real speed / dashboard (ECU) speed
     # and corrects for the situation where the radius of the fitted tyres
@@ -328,22 +321,28 @@ class GuiConfig(tk.Frame):
         super().__init__(parent)
         self.sv_speed = tk.StringVar()
         self.render_screen()
+        self.process_updates()
+
+    def process_updates(self):
+        fullscreen = self.fs_status.get()
+        self.after(500, self.process_updates)
 
     def render_screen(self):
-        self.configure(bg=self.settings.bg_color, borderwidth=0)
+        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(self.settings.base_font_size/4)), weight='normal')
-        font_inputs = font.Font(family='Ariel', size=int(self.settings.base_font_size*0.12), weight='normal')
+        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
+        font_inputs = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*0.12), weight='normal')
 
         # widgets
         screen_title = tk.Label(
-            self, text=self.settings.config_screen_title,
-            width=self.settings.screen_width, pady=12, fg='white', bg=self.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.config_screen_title,
+            width=shared_memory.settings.screen_width, pady=12,
+            fg='white', bg=shared_memory.settings.bg_color, font=font_title
         )
 
         speed_limit = tk.Label(
             self, text="Pit Lane Speed Limit (kph):",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         default_speed = tk.StringVar()
@@ -352,49 +351,46 @@ class GuiConfig(tk.Frame):
 
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
-        fs_status = tk.StringVar()
-        fullscreen_check_box = tk.Checkbutton(self, variable=fs_status, bg=self.settings.bg_color)
-        if self.settings.fullscreen == 1:
-            fullscreen_check_box.select()
-        else:
-            fullscreen_check_box.deselect()
+        self.fs_status = tk.IntVar()
+        self.fs_status.set(shared_memory.settings.fullscreen)
+        fullscreen_check_box = tk.Checkbutton(self, variable=self.fs_status, bg=shared_memory.settings.bg_color)
 
         version = tk.Label(
             self, text=__version__,
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank3 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank4 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank5 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank6 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank7 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         blank8 = tk.Label(
             self, text=" ",
-            fg='white', bg=self.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
         )
 
         quit_button = tk.Button(self, text='Quit', command=quit_yesican)

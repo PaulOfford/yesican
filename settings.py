@@ -2,6 +2,7 @@
 # Be careful not to change the structure of the variables
 # as this will cause program exceptions and the yesican won't run.
 # Make a backup copy of this file before modifying it.
+import configparser
 
 class Settings:
     screen_width = 480
@@ -37,12 +38,45 @@ class Settings:
     ]
 
     pit_screen_title = "Pit Speed"
+    pit_speed_limit = 50
     pit_triggers = [
         # trigger kph, which blocks to light, block colour, flash, speed text color
-        {'speed': 46, 'blks': [0, 4], 'blk_color': led_clr[0], 'flash': False, 'speed_color': default_speed_color},
-        {'speed': 48, 'blks': [1, 3], 'blk_color': led_clr[1], 'flash': False, 'speed_color': default_speed_color},
-        {'speed': 50, 'blks': [2], 'blk_color': led_clr[2], 'flash': False, 'speed_color': led_clr[2]},
-        {'speed': 51, 'blks': [2], 'blk_color': led_clr[2], 'flash': True, 'speed_color': led_clr[2]}
+        {
+            'speed': pit_speed_limit - 4, 'blks': [0, 4],
+            'blk_color': led_clr[0], 'flash': False, 'speed_color': default_speed_color
+        },
+        {
+            'speed': pit_speed_limit - 2, 'blks': [1, 3],
+            'blk_color': led_clr[1], 'flash': False, 'speed_color': default_speed_color
+        },
+        {
+            'speed': pit_speed_limit, 'blks': [2],
+            'blk_color': led_clr[2], 'flash': False, 'speed_color': led_clr[2]
+        },
+        {
+            'speed': pit_speed_limit + 1, 'blks': [2],
+            'blk_color': led_clr[2], 'flash': True, 'speed_color': led_clr[2]
+        }
     ]
 
     config_screen_title = "Configuration"
+
+    def read_config(self) -> None:
+        # Create a ConfigParser object
+        config = configparser.ConfigParser()
+
+        # Read the configuration file
+        config.read('config.ini')
+
+        # Access values from the configuration file
+        self.screen_width = config.get('General', 'screen_width')
+        self.screen_height = config.get('General', 'screen_height')
+        self.fullscreen = config.get('General', 'fullscreen')
+        self.base_font_size = config.get('General', 'base_font_size')
+        self.bg_color = config.get('General', 'bg_color')
+
+        return
+
+    def set_fullscreen(self):
+        self.fullscreen = 1
+
