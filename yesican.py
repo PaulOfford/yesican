@@ -11,7 +11,7 @@ class MainWindow:
 
     def __init__(self, master):
         mainframe = tk.Frame(master)
-        mainframe.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
+        mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
 
         self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe), GuiConfig(mainframe)]
@@ -58,14 +58,15 @@ class MainWindow:
 
 if __name__ == "__main__":
     shared_memory.settings = Settings()
+    shared_memory.settings.read_config()
 
     shared_memory.root = tk.Tk()
     # root.overrideredirect(True)
     # root.wm_attributes('-fullscreen', 'True')
     shared_memory.root.geometry(
-        str(shared_memory.settings.screen_width) + "x" + str(shared_memory.settings.screen_height)
+        str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
     )
-    shared_memory.root.configure(bg=shared_memory.settings.bg_color)
+    shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
     window = MainWindow(shared_memory.root)
     shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
     shared_memory.root.mainloop()

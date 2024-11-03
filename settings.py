@@ -5,84 +5,152 @@
 import configparser
 
 class Settings:
-    config = None
-    
-    screen_width = 480
-    screen_height = 320
-    fullscreen = 1  # 0 = off, 1 = on
+    config = configparser.ConfigParser()
 
-    base_font_size = 96
-    bg_color = "#595959"
     led_off_color = 'white'
     default_gear_color = 'white'
-    default_speed_color = default_gear_color
-    default_blk_color = bg_color
+    default_speed_color = 'white'
+    default_blk_color = 'gray20'
 
     led_radius = 16
-    led_clr = ["#00FF00", "yellow", "red"]
+    led_good = "lawn green"
+    led_warning = "yellow"
+    led_alert = "red"
+
     no_of_leds = 11
 
-    shift_screen_title = "Gear Shift"
-    shift_triggers = [
-        # tuplet (trigger rpm, led_colour, flash)
-        {'rpm': 4500, 'led': led_clr[0], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 5000, 'led': led_clr[0], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 5500, 'led': led_clr[0], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6000, 'led': led_clr[0], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6500, 'led': led_clr[1], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6575, 'led': led_clr[1], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6650, 'led': led_clr[1], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6725, 'led': led_clr[1], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6800, 'led': led_clr[2], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6866, 'led': led_clr[2], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 6932, 'led': led_clr[2], 'flash': False, 'gear_color': default_gear_color},
-        {'rpm': 7000, 'led': led_clr[2], 'flash': True, 'gear_color': led_clr[2]}
-    ]
-
-    pit_screen_title = "Pit Speed"
-    pit_speed_limit = 50
-    pit_triggers = [
-        # trigger kph, which blocks to light, block colour, flash, speed text color
-        {
-            'speed': pit_speed_limit - 4, 'blks': [0, 4],
-            'blk_color': led_clr[0], 'flash': False, 'speed_color': default_speed_color
-        },
-        {
-            'speed': pit_speed_limit - 2, 'blks': [1, 3],
-            'blk_color': led_clr[1], 'flash': False, 'speed_color': default_speed_color
-        },
-        {
-            'speed': pit_speed_limit, 'blks': [2],
-            'blk_color': led_clr[2], 'flash': False, 'speed_color': led_clr[2]
-        },
-        {
-            'speed': pit_speed_limit + 1, 'blks': [2],
-            'blk_color': led_clr[2], 'flash': True, 'speed_color': led_clr[2]
-        }
-    ]
-
-    config_screen_title = "Configuration"
+    shift_triggers = None
+    pit_triggers = None
 
     def __init__(self):
-        # Create a ConfigParser object
-        self.config = configparser.ConfigParser()
+        self.config.read('config.ini')
+
+        good_increment = int((self.get_min_shift_rpm() - self.get_power_band_start()) / 4)
+        warning_increment = int((self.get_shift_alert_rpm() - self.get_min_shift_rpm()) / 4)
+        alert_increment = int((self.get_rpm_limit() - self.get_shift_alert_rpm()) / 3)
+        self.shift_triggers = [
+            # tuplet (trigger rpm, led_colour, flash)
+            {
+                'rpm': self.get_power_band_start(), 'led': self.led_good, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_power_band_start() + (good_increment * 1), 'led': self.led_good, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_power_band_start() + (good_increment * 2), 'led': self.led_good, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_power_band_start() + (good_increment * 3), 'led': self.led_good, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_min_shift_rpm(), 'led': self.led_warning, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_min_shift_rpm() + (warning_increment * 1), 'led': self.led_warning, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_min_shift_rpm() + (warning_increment * 2), 'led': self.led_warning, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_min_shift_rpm() + (warning_increment * 3), 'led': self.led_warning, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_shift_alert_rpm(), 'led': self.led_alert, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_shift_alert_rpm() + (alert_increment * 1), 'led': self.led_alert, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_shift_alert_rpm() + (alert_increment * 2), 'led': self.led_alert, 'flash': False,
+                'gear_color': self.default_gear_color
+            },
+            {
+                'rpm': self.get_rpm_limit(), 'led': self.led_alert, 'flash': True,
+                'gear_color': self.led_alert
+            }
+        ]
+
+        self.pit_triggers = [
+            # trigger kph, which blocks to light, block colour, flash, speed text color
+            {
+                'speed': self.get_pit_speed_limit() - 4, 'blks': [0, 4],
+                'blk_color': self.led_good, 'flash': False, 'speed_color': self.default_speed_color
+            },
+            {
+                'speed': self.get_pit_speed_limit() - 2, 'blks': [1, 3],
+                'blk_color': self.led_warning, 'flash': False, 'speed_color': self.default_speed_color
+            },
+            {
+                'speed': self.get_pit_speed_limit(), 'blks': [2],
+                'blk_color': self.led_alert, 'flash': False, 'speed_color': self.led_alert
+            },
+            {
+                'speed': self.get_pit_speed_limit() + 1, 'blks': [2],
+                'blk_color': self.led_alert, 'flash': True, 'speed_color': self.led_alert
+            }
+        ]
 
     def read_config(self) -> None:
         # Read the configuration file
         self.config.read('config.ini')
 
-        # Access values from the configuration file
-        self.screen_width = self.config.get('General', 'screen_width')
-        self.screen_height = self.config.get('General', 'screen_height')
-        self.fullscreen = self.config.get('General', 'fullscreen')
-        self.base_font_size = self.config.get('General', 'base_font_size')
-        self.bg_color = self.config.get('General', 'bg_color')
+    def get_pit_speed_limit(self) -> int:
+        return int(self.config.get('pit', 'pit_speed_limit'))
 
-        return
-
-    def set_fullscreen(self, state: int) -> None:
-        self.config.set('General', 'fullscreen', str(state))
+    def set_pit_speed_limit(self, state: int) -> None:
+        self.config.read('config.ini')
+        self.config.set('pit', 'pit_speed_limit', str(state))
         with open("config.ini", "w") as f:
             self.config.write(f)
-        self.config.close(f)
 
+    def set_fullscreen(self, state: int) -> None:
+        self.config.read('C:\\Users\\paulo\\PycharmProjects\\yesican\\config.ini')
+        self.config.set('general', 'fullscreen', str(state))
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+
+    def get_screen_width(self) -> int:
+        return int(self.config.get('general', 'screen_width'))
+
+    def get_screen_height(self) -> int:
+        return int(self.config.get('general', 'screen_height'))
+
+    def get_bg_color(self) -> str:
+        return self.config.get('general', 'bg_color').replace("'", "")
+
+    def get_base_font_size(self) -> int:
+        return int(self.config.get('general', 'base_font_size'))
+
+    def get_fullscreen_state(self) -> int:
+        return int(self.config.get('general', 'fullscreen').replace("'", ""))
+
+    def get_power_band_start(self) -> int:
+        return int(self.config.get('shift', 'power_band_start'))
+
+    def get_min_shift_rpm(self) -> int:
+        return int(self.config.get('shift', 'min_shift_rpm'))
+
+    def get_shift_alert_rpm(self) -> int:
+        return int(self.config.get('shift', 'shift_alert_rpm'))
+
+    def get_rpm_limit(self) -> int:
+        return int(self.config.get('shift', 'rpm_limit'))
+
+    def get_shift_screen_title(self) -> str:
+        return self.config.get('shift', 'shift_screen_title').replace('"', '')
+
+    def get_pit_screen_title(self) -> str:
+        return self.config.get('pit', 'pit_screen_title').replace('"', '')
+
+    def get_conf_screen_title(self) -> str:
+        return self.config.get('config', 'config_screen_title').replace('"', '')

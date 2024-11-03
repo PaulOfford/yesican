@@ -67,12 +67,12 @@ class GuiGearShift(tk.Frame):
     def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
         radius = shared_memory.settings.led_radius
         self.my_canvas = tk.Canvas(
-            container, bg=shared_memory.settings.bg_color,
-            height=(4 * radius), width=shared_memory.settings.screen_width,
+            container, bg=shared_memory.settings.get_bg_color(),
+            height=(4 * radius), width=shared_memory.settings.get_screen_width(),
             border=0, highlightthickness=0
         )
         offset = 2.5 * radius
-        xpos = (shared_memory.settings.screen_width / 2) - (5 * offset)
+        xpos = int((shared_memory.settings.get_screen_width() / 2) - (5 * offset))
         ypos = 2 * radius
 
         for i in range(0, shared_memory.settings.no_of_leds):
@@ -125,26 +125,30 @@ class GuiGearShift(tk.Frame):
         self.after(250, self.process_updates)
 
     def render_screen(self):
-        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
-        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*1.1), weight='normal')
+        font_title = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())/4), weight='normal'
+        )
+        font_gear = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
+        )
 
         # widgets
         self.screen_title = tk.Label(
-            self, text=shared_memory.settings.shift_screen_title,
-            width=20, pady=12, fg='white', bg=shared_memory.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.get_shift_screen_title(),
+            width=20, pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
         self.shift_lights = self.populate_shift_leds(container=self)
 
         self.gear_value = tk.Label(
             self, textvariable=self.sv_gear,
-            fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.bg_color, font=font_gear
+            fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.get_bg_color(), font=font_gear
         )
 
         self.sv_rpm.set(str(shared_memory.eng_rpm))
         self.rpm_label = tk.Label(
-            self, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.bg_color, font=font_title
+            self, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.get_bg_color(), font=font_title
         )
 
         self.next_button = tk.Button(self, text='Next', command=next_display)
@@ -195,21 +199,21 @@ class GuiPitSpeed(tk.Frame):
     def create_gauge(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
         radius = shared_memory.settings.led_radius
         self.my_canvas = tk.Canvas(
-            container, bg=shared_memory.settings.bg_color,
-            height=(4 * radius), width=shared_memory.settings.screen_width,
+            container, bg=shared_memory.settings.get_bg_color(),
+            height=(4 * radius), width=shared_memory.settings.get_screen_width(),
             border=0, highlightthickness=0
         )
 
         blk_width = 80
         blk_height = 20
-        xstart = (shared_memory.settings.screen_width / 2) - (2.5 * blk_width)
+        xstart = (shared_memory.settings.get_screen_width() / 2) - (2.5 * blk_width)
         ypos = 1 * blk_height
 
         for i in range(0, 5):
             xpos = xstart + (i * blk_width)
             self.blk.append(
                 self.my_canvas.create_rectangle(
-                    xpos, ypos, xpos + blk_width, ypos + blk_height, outline=shared_memory.settings.bg_color
+                    xpos, ypos, xpos + blk_width, ypos + blk_height, outline=shared_memory.settings.get_bg_color()
                 )
             )
             self.my_canvas.itemconfigure(self.blk[i], fill=shared_memory.settings.default_blk_color)
@@ -259,21 +263,21 @@ class GuiPitSpeed(tk.Frame):
         self.after(500, self.process_updates)
 
     def render_screen(self):
-        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
-        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*1.1), weight='normal')
+        font_title = font.Font(family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal')
+        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.get_base_font_size()*1.1), weight='normal')
 
         # widgets
         screen_title = tk.Label(
-            self, text=shared_memory.settings.pit_screen_title,
-            width=20, pady=12, fg='white', bg=shared_memory.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.get_pit_screen_title(),
+            width=20, pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
         self.speed_blocks = self.create_gauge(container=self)
 
         self.speed_value = tk.Label(
             self, textvariable=self.sv_speed,
-            fg=self.speed_color, bg=shared_memory.settings.bg_color, font=font_gear
+            fg=self.speed_color, bg=shared_memory.settings.get_bg_color(), font=font_gear
         )
 
         next_button = tk.Button(self, text='Next', command=next_display)
@@ -330,72 +334,76 @@ class GuiConfig(tk.Frame):
         self.after(500, self.process_updates)
 
     def render_screen(self):
-        self.configure(bg=shared_memory.settings.bg_color, borderwidth=0)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=(int(shared_memory.settings.base_font_size/4)), weight='normal')
-        font_inputs = font.Font(family='Ariel', size=int(shared_memory.settings.base_font_size*0.12), weight='normal')
+        font_title = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal'
+        )
+        font_inputs = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
+        )
 
         # widgets
         screen_title = tk.Label(
-            self, text=shared_memory.settings.config_screen_title,
-            width=shared_memory.settings.screen_width, pady=12,
-            fg='white', bg=shared_memory.settings.bg_color, font=font_title
+            self, text=shared_memory.settings.get_conf_screen_title(),
+            width=shared_memory.settings.get_screen_width(), pady=12,
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
 
         speed_limit = tk.Label(
             self, text="Pit Lane Speed Limit (kph):",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         self.pit_speed = tk.StringVar()
-        self.pit_speed.set(str(shared_memory.pit_speed_limit))
+        self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         speed_box = tk.Entry(self, textvariable=self.pit_speed)
 
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         self.fs_status = tk.IntVar()
-        self.fs_status.set(shared_memory.settings.fullscreen)
+        self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         fullscreen_check_box = tk.Checkbutton(
-            self, variable=self.fs_status, bg=shared_memory.settings.bg_color,
+            self, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
             command= lambda: shared_memory.settings.set_fullscreen(self.fs_status.get())
         )
 
         version = tk.Label(
             self, text=__version__,
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank3 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank4 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank5 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank6 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank7 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         blank8 = tk.Label(
             self, text=" ",
-            fg='white', bg=shared_memory.settings.bg_color, font=font_inputs
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
         quit_button = tk.Button(self, text='Quit', command=quit_yesican)

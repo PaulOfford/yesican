@@ -6,7 +6,7 @@ eng_rpm = 0
 pre_calc_gear = 3
 speed = 0
 
-pit_speed_limit = 50  # kph - this is a default setting
+# pit_speed_limit = 50  # kph - this is a default setting
 
 root = None
 
