@@ -107,14 +107,15 @@ class Settings:
     def get_pit_speed_limit(self) -> int:
         return int(self.config.get('pit', 'pit_speed_limit'))
 
-    def set_pit_speed_limit(self, state: int) -> None:
-        self.config.read('config.ini')
-        self.config.set('pit', 'pit_speed_limit', str(state))
+    def set_pit_speed_limit(self, speed: int) -> None:
+        self.config.set('pit', 'pit_speed_limit', str(speed))
         with open("config.ini", "w") as f:
             self.config.write(f)
 
-    def set_fullscreen(self, state: int) -> None:
-        self.config.read('C:\\Users\\paulo\\PycharmProjects\\yesican\\config.ini')
+    def get_fullscreen_state(self) -> int:
+        return int(self.config.get('general', 'fullscreen').replace("'", ""))
+
+    def set_fullscreen_state(self, state: int) -> None:
         self.config.set('general', 'fullscreen', str(state))
         with open("config.ini", "w") as f:
             self.config.write(f)
@@ -130,9 +131,6 @@ class Settings:
 
     def get_base_font_size(self) -> int:
         return int(self.config.get('general', 'base_font_size'))
-
-    def get_fullscreen_state(self) -> int:
-        return int(self.config.get('general', 'fullscreen').replace("'", ""))
 
     def get_power_band_start(self) -> int:
         return int(self.config.get('shift', 'power_band_start'))

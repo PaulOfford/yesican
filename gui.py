@@ -329,6 +329,18 @@ class GuiConfig(tk.Frame):
         self.render_screen()
         self.process_updates()
 
+    def update_config(self) -> None:
+        shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
+        pass
+
+    def next_display(self) -> None:
+        self.update_config()
+        shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
+
+    def quit_yesican(self):
+        self.update_config()
+        exit(0)
+
     def process_updates(self):
         fullscreen = self.fs_status.get()
         self.after(500, self.process_updates)
@@ -368,7 +380,7 @@ class GuiConfig(tk.Frame):
         self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         fullscreen_check_box = tk.Checkbutton(
             self, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
-            command= lambda: shared_memory.settings.set_fullscreen(self.fs_status.get())
+            command= lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
         )
 
         version = tk.Label(
@@ -406,8 +418,8 @@ class GuiConfig(tk.Frame):
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
-        quit_button = tk.Button(self, text='Quit', command=quit_yesican)
-        next_button = tk.Button(self, text='Next', command=next_display)
+        quit_button = tk.Button(self, text='Quit', command=self.quit_yesican)
+        next_button = tk.Button(self, text='Next', command=self.next_display)
 
         # define grid
         self.columnconfigure(0, weight=1)
