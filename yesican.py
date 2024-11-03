@@ -62,7 +62,8 @@ if __name__ == "__main__":
 
     shared_memory.root = tk.Tk()
     # root.overrideredirect(True)
-    # root.wm_attributes('-fullscreen', 'True')
+    if shared_memory.settings.get_fullscreen_state() == 1:
+        shared_memory.root.wm_attributes('-fullscreen', 'True')
     shared_memory.root.geometry(
         str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
     )
