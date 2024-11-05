@@ -12,12 +12,16 @@ class Backend:
 
     def calculate_gear(self, speed: int, rpm: int) -> int:
         gearing_factor_values = shared_memory.settings.get_gearing_factor()
-        kph_per_thousand_rpm = speed / (rpm / 1000)
+        kph_per_thousand_rpm = int(speed / (rpm / 1000))
+        gear_number = 0
 
         for i, gear_factor in enumerate(gearing_factor_values):
             if kph_per_thousand_rpm >= gear_factor[0] and kph_per_thousand_rpm <= gear_factor[1]:
                 gear_number = i
                 break
+
+        if gear_number == 0:
+            stop_here = True
 
         return gear_number  # gear number
 
