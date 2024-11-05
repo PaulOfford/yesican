@@ -306,19 +306,6 @@ class GuiConfig(tk.Frame):
     pit_speed = None  # StringVar
     fs_status = None  # IntVar
 
-    # speed_correction_factor equals real speed / dashboard (ECU) speed
-    # and corrects for the situation where the radius of the fitted tyres
-    # differs from that of the original tyres
-    speed_correction_factor = 151 / 160
-
-    speed_limit = 50  # kph - pit lane speed limit - default is 50
-
-    # gearing_factor is used in the calculation of current gear from corrected speed and rpm
-    # each entry represents a gear (starting from Neutral) has min and max kph per 1000 rpm
-    # set min as low as possible without overlapping with the previous gear to accommodate wheel spin
-    # default is BMW 116i E87 5 speed with Nankang NS-2R tyres
-    gearing_factor = [(0, 0), (1, 8), (9, 12), (13, 18), (19, 25), (26, 100)]
-
     speed_blocks = None
     blk = []
 

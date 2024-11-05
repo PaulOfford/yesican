@@ -152,3 +152,21 @@ class Settings:
 
     def get_conf_screen_title(self) -> str:
         return self.config.get('config', 'config_screen_title').replace('"', '')
+
+    def get_speed_correction_factor(self) -> float:
+        return float(self.config.get('general', 'speed_correction_factor'))
+
+    def get_gearing_factor(self):
+        gearing_factor_list = self.config.get('general', 'gearing_factor').split()
+
+        gearing_factor_values = [[number for number in range(2)] for _ in range(int(len(gearing_factor_list)/2))]
+
+        j = 0
+        for i, gearing_factor in enumerate(gearing_factor_list):
+            if i % 2:
+                gearing_factor_values[j][1] = int(gearing_factor)
+                j += 1
+            else:
+                gearing_factor_values[j][0] = int(gearing_factor)
+
+        return gearing_factor_values

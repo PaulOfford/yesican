@@ -1,7 +1,7 @@
 import tkinter as tk
 from settings import *
 from gui import *
-import shared_memory
+from backend import *
 
 
 class MainWindow:
@@ -68,6 +68,11 @@ if __name__ == "__main__":
         str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
     )
     shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
+
+    # start the backend
+    backend = Backend()
+
     window = MainWindow(shared_memory.root)
     shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
+    shared_memory.root.after(100, backend.run_backend())
     shared_memory.root.mainloop()
