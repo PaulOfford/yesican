@@ -104,6 +104,9 @@ class Settings:
         # Read the configuration file
         self.config.read('config.ini')
 
+    def get_test_mode(self) -> bool:
+        return bool(self.config.get('general', 'test_mode'))
+
     def get_pit_speed_limit(self) -> int:
         return int(self.config.get('pit', 'pit_speed_limit'))
 

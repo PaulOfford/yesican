@@ -87,13 +87,6 @@ class GuiGearShift(tk.Frame):
                 gear_text_color = trigger['gear_color']
         return gear_text_color
 
-    @staticmethod
-    def sim_rpm():
-        if shared_memory.eng_rpm > 8000 or shared_memory.eng_rpm < 850:
-            shared_memory.eng_rpm = 850
-        else:
-            shared_memory.eng_rpm += 250
-
     def update_rpm_gauge(self):
         self.sv_rpm.set(str(shared_memory.eng_rpm))
 
@@ -119,7 +112,6 @@ class GuiGearShift(tk.Frame):
 
     def process_updates(self):
         if shared_memory.current_mode == 0:
-            self.sim_rpm()
             self.update_shift_lights()
             self.update_gear_gauge()
             self.update_rpm_gauge()
@@ -218,13 +210,6 @@ class GuiPitSpeed(tk.Frame):
 
         return self.my_canvas
 
-    @staticmethod
-    def sim_speed():
-        if shared_memory.speed > 52 or shared_memory.speed < 42:
-            shared_memory.speed = 42
-        else:
-            shared_memory.speed += 1
-
     def update_speed_gauge(self):
         self.sv_speed.set(str(shared_memory.speed))
         self.speed_value.configure(fg=self.speed_color)
@@ -255,7 +240,7 @@ class GuiPitSpeed(tk.Frame):
     def process_updates(self):
         # we only want to mess with the display if it is top of the stack
         if shared_memory.current_mode == 1:
-            self.sim_speed()
+            # self.sim_speed()
             self.update_speed_blocks()
             self.update_speed_gauge()
         self.after(500, self.process_updates)
@@ -263,8 +248,12 @@ class GuiPitSpeed(tk.Frame):
     def render_screen(self):
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
 
-        font_title = font.Font(family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal')
-        font_gear = font.Font(family='Ariel', size=int(shared_memory.settings.get_base_font_size()*1.1), weight='normal')
+        font_title = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal'
+        )
+        font_gear = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()*1.1), weight='normal'
+        )
 
         # widgets
         screen_title = tk.Label(
@@ -328,6 +317,7 @@ class GuiConfig(tk.Frame):
         yesican_shutdown()
 
     def process_updates(self):
+        # shared_memory.flash_window = False
         fullscreen = self.fs_status.get()
         self.after(500, self.process_updates)
 
@@ -366,7 +356,7 @@ class GuiConfig(tk.Frame):
         self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         fullscreen_check_box = tk.Checkbutton(
             self, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
-            command= lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
+            command=lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
         )
 
         version = tk.Label(
