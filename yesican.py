@@ -1,7 +1,16 @@
-import tkinter as tk
+import threading
+
 from settings import *
 from gui import *
 from backend import *
+
+
+def yesican_shutdown():
+    shared_memory.run_state = shared_memory.RUN_STATE_AWAITING_BACKEND
+    shared_memory.backend_thread.join(0.5)  # wait for up to one second for the backend thread to exit
+    shared_memory.root.destroy()
+    shared_memory.run_state = shared_memory.RUN_STATE_EXITING
+    exit(0)
 
 
 class MainWindow:
@@ -56,23 +65,33 @@ class MainWindow:
         master.after(250, lambda: self.check_switch(master))
 
 
+class Presentation:
+
+    def __init__(self):
+        shared_memory.settings = Settings()
+        shared_memory.settings.read_config()
+
+        # start backend thread
+        backend = Backend()
+        shared_memory.backend_thread = threading.Thread(target=backend.backend_loop)
+        shared_memory.backend_thread.start()
+
+    def run_presentation(self):
+        shared_memory.root = tk.Tk()
+        shared_memory.root.protocol("WM_DELETE_WINDOW", yesican_shutdown)
+
+        if shared_memory.settings.get_fullscreen_state() == 1:
+            shared_memory.root.wm_attributes('-fullscreen', 'True')
+        shared_memory.root.geometry(
+            str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
+        )
+        shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
+
+        window = MainWindow(shared_memory.root)
+        shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
+        shared_memory.root.mainloop()
+
+
 if __name__ == "__main__":
-    shared_memory.settings = Settings()
-    shared_memory.settings.read_config()
-
-    shared_memory.root = tk.Tk()
-    # root.overrideredirect(True)
-    if shared_memory.settings.get_fullscreen_state() == 1:
-        shared_memory.root.wm_attributes('-fullscreen', 'True')
-    shared_memory.root.geometry(
-        str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
-    )
-    shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
-
-    # start the backend
-    backend = Backend()
-
-    window = MainWindow(shared_memory.root)
-    shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
-    shared_memory.root.after(100, backend.run_backend())
-    shared_memory.root.mainloop()
+    presentation = Presentation()
+    presentation.run_presentation()

@@ -5,13 +5,21 @@ import shared_memory
 
 
 class Backend:
+    bus_vector = None
+
+    def __init__(self):
+        self.bus_vector = can.interface.Bus(
+            bustype="usb2can", channel="2ABDDE6D", bitrate=100000, dll='/Windows/System32/usb2can.dll'
+        )
+
+
     def calculate_adjusted_speed(self, dashboard_speed) -> int:
         correction_factor = shared_memory.settings.get_speed_correction_factor()
         return int(dashboard_speed * correction_factor)  # kph
 
     def calculate_gear(self, speed: int, rpm: int) -> int:
         gearing_factor_values = shared_memory.settings.get_gearing_factor()
-        kph_per_thousand_rpm = int(speed / (rpm / 1000))
+        kph_per_thousand_rpm = int(speed / (max(rpm, 1) / 1000))
         gear_number = 0
 
         for i, gear_factor in enumerate(gearing_factor_values):
@@ -26,27 +34,24 @@ class Backend:
 
     def get_can_message(self):
 
-        bus_vector = can.interface.Bus(
-            bustype="usb2can", channel="2ABDDE6D", bitrate=100000, dll='/Windows/System32/usb2can.dll'
-        )
+        msg = self.bus_vector.recv()
+        print(hex(msg.arbitration_id), msg.data.hex(' ', -4))
 
-        with bus_vector as bus:
-        # with can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
-        #                        dll='/Windows/System32/usb2can.dll') as bus:
-
-            count = 1
-            # while (True):
-            for msg in bus:
-                print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
-
-                count += 1
         return
 
-    def run_backend(self):
-        self.get_can_message()
-        shared_memory.speed = self.calculate_adjusted_speed(52)
-        shared_memory.pre_calc_gear = self.calculate_gear(
-            speed=shared_memory.speed,
-            rpm=shared_memory.eng_rpm
-        )
-        shared_memory.root.after(100, self.run_backend)
+    def backend_loop(self):
+        shared_memory.run_state = shared_memory.RUN_STATE_RUNNING
+
+        while shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+            self.get_can_message()
+            shared_memory.speed = self.calculate_adjusted_speed(52)
+            shared_memory.pre_calc_gear = self.calculate_gear(
+                speed=shared_memory.speed,
+                rpm=shared_memory.eng_rpm
+            )
+            time.sleep(0.05)
+
+        # shut the usb2can bus
+        self.bus_vector.shutdown()
+
+        exit(0)

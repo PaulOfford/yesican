@@ -2,6 +2,7 @@ from typing import Union
 import tkinter as tk
 import tkinter.font as font
 import shared_memory
+from yesican import yesican_shutdown
 
 from _version import __version__
 
@@ -16,10 +17,6 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
 
 def next_display() -> None:
     shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
-
-
-def quit_yesican():
-    exit(0)
 
 
 class GuiBlank(tk.Frame):
@@ -177,9 +174,6 @@ class GuiGearShift(tk.Frame):
         # pack this frame with the content above
         self.pack()
 
-        # self.my_root.after(200, self.process_updates)
-        # self.my_root.mainloop()
-
 
 class GuiPitSpeed(tk.Frame):
 
@@ -330,7 +324,8 @@ class GuiConfig(tk.Frame):
 
     def quit_yesican(self):
         self.update_config()
-        exit(0)
+        shared_memory.run_state = shared_memory.RUN_STATE_PENDING_SHUTDOWN
+        yesican_shutdown()
 
     def process_updates(self):
         fullscreen = self.fs_status.get()

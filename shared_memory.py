@@ -1,6 +1,15 @@
 from settings import *
 
 settings = Settings()
+backend_thread = None
+
+# run_state is used to control the execution and shutdown of yesican
+RUN_STATE_RUNNING = 3
+RUN_STATE_PENDING_SHUTDOWN = 2
+RUN_STATE_AWAITING_BACKEND = 1
+RUN_STATE_EXITING = 0
+
+run_state = 3  # 3 - running, 2 - pending shutdown, 1 - waiting for backend to stop, 0 - exiting
 
 eng_rpm = 0
 pre_calc_gear = 3
