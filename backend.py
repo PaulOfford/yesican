@@ -26,15 +26,20 @@ class Backend:
 
     def get_can_message(self):
 
-        with can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
-                               dll='/Windows/System32/usb2can.dll') as bus:
+        bus_vector = can.interface.Bus(
+            bustype="usb2can", channel="2ABDDE6D", bitrate=100000, dll='/Windows/System32/usb2can.dll'
+        )
+
+        with bus_vector as bus:
+        # with can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
+        #                        dll='/Windows/System32/usb2can.dll') as bus:
 
             count = 1
-            while (True):
-                for msg in bus:
-                    print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
+            # while (True):
+            for msg in bus:
+                print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
 
-                    count += 1
+                count += 1
         return
 
     def run_backend(self):

@@ -1,12 +1,13 @@
-import platform
 import can
-import time
 
 
 class CanInterface:
+    bus_vector = None
     def read_messages(self):
-        with can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
-                               dll='/Windows/System32/usb2can.dll') as bus:
+        self.bus_vector = can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
+                               dll='/Windows/System32/usb2can.dll')
+
+        with self.bus_vector as bus:
 
             count = 1
             while (True):
