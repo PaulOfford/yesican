@@ -1,11 +1,18 @@
+import platform
 import can
 
 
 class CanInterface:
     bus_vector = None
     def read_messages(self):
-        self.bus_vector = can.interface.Bus(bustype="usb2can", channel="2ABDDE6D", bitrate=100000,
-                               dll='/Windows/System32/usb2can.dll')
+        if platform.system() == 'Windows':
+            self.bus_vector = can.interface.Bus(
+                channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
+            )
+        elif platform.system() == 'Linux':
+            self.bus_vector = can.interface.Bus(
+                channel='can0', interface='socketcan', bitrate=100000
+            )
 
         with self.bus_vector as bus:
 
