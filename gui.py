@@ -302,7 +302,6 @@ class GuiConfig(tk.Frame):
         self.pit_speed = tk.StringVar()
         self.fs_status = tk.IntVar()
         self.render_screen()
-        self.process_updates()
 
     def update_config(self) -> None:
         shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
@@ -316,11 +315,6 @@ class GuiConfig(tk.Frame):
         self.update_config()
         shared_memory.run_state = shared_memory.RUN_STATE_PENDING_SHUTDOWN
         yesican_shutdown()
-
-    def process_updates(self):
-        # shared_memory.flash_window = False
-        fullscreen = self.fs_status.get()
-        self.after(500, self.process_updates)
 
     def render_screen(self):
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
