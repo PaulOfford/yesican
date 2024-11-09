@@ -163,7 +163,6 @@ class GuiGearShift(tk.Frame):
         self.gear_value.grid(row=2, column=0, columnspan=3)
         self.rpm_label.grid(row=3, column=0, sticky='sw', padx=5, pady=5)
         self.next_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
-        self.next_button.focus()
 
         # pack this frame with the content above
         self.pack()
