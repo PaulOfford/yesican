@@ -153,9 +153,9 @@ class GuiGearShift(tk.Frame):
         self.columnconfigure(2, weight=1)
 
         shared_memory.root.update()
-        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)  # 10% for title
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 10% for title
         self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)  # 25% for LEDs
-        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.50)  # 50% for gear number
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)  # 50% for gear number
         self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 15% for footer
 
         self.screen_title.grid(row=0, column=0, columnspan=3)
@@ -275,9 +275,9 @@ class GuiPitSpeed(tk.Frame):
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
         shared_memory.root.update()
-        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
         self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)
-        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.50)
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)
         self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
 
         screen_title.grid(row=0, column=0, columnspan=3)
