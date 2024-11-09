@@ -105,7 +105,10 @@ class Settings:
         self.config.read('config.ini')
 
     def get_test_mode(self) -> bool:
-        return bool(self.config.get('general', 'test_mode'))
+        if self.config.get('general', 'test_mode').upper() == 'TRUE':
+            return True
+        else:
+            return False
 
     def get_pit_speed_limit(self) -> int:
         return int(self.config.get('pit', 'pit_speed_limit'))
@@ -116,10 +119,16 @@ class Settings:
             self.config.write(f)
 
     def get_fullscreen_state(self) -> bool:
-        return bool(self.config.get('general', 'fullscreen'))
+        if self.config.get('general', 'fullscreen').upper() == 'TRUE':
+            return True
+        else:
+            return False
 
-    def set_fullscreen_state(self, state: int) -> None:
-        self.config.set('general', 'fullscreen', str(state))
+    def set_fullscreen_state(self, state: bool) -> None:
+        if state:
+            self.config.set('general', 'fullscreen', 'true')
+        else:
+            self.config.set('general', 'fullscreen', 'false')
         with open("config.ini", "w") as f:
             self.config.write(f)
 
