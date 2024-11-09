@@ -25,7 +25,7 @@ class MainWindow:
 
         self.frameList = [GuiGearShift(mainframe), GuiPitSpeed(mainframe), GuiConfig(mainframe)]
         shared_memory.no_of_modes = len(self.frameList)
-        for i in range(1,shared_memory.no_of_modes):
+        for i in range(1, shared_memory.no_of_modes):
             self.frameList[i].forget()
         self.blank_display = GuiBlank(mainframe)
         self.blank_display.forget()
@@ -35,32 +35,29 @@ class MainWindow:
         self.index = (self.index + 1) % len(self.frameList)
         self.frameList[self.index].tkraise()
         self.frameList[self.index].pack()
+        self.visible = True
 
         shared_memory.current_mode = shared_memory.desired_mode
 
-    def flash_window(self) -> None:
-        # we shouldn't flash the screen if we are in the config window
-        if shared_memory.flash_window and shared_memory.current_mode != len(self.frameList) - 1:
-            if self.visible:
-                self.frameList[self.index].forget()
-                self.blank_display.tkraise()  # assumes blank is last frame in the framelist
-                self.visible = False
-                self.blank_display.pack()
-            else:
-                self.blank_display.forget()  # assumes blank is last frame in the framelist
-                self.frameList[self.index].tkraise()
-                self.visible = True
-                self.frameList[self.index].pack()
+    def flash_window(self, flash: bool) -> None:
+        if self.visible and flash:
+            self.frameList[self.index].forget()
+            self.blank_display.tkraise()  # assumes blank is last frame in the framelist
+            self.visible = False
+            self.blank_display.pack()
         else:
-            self.visible = True
-            self.blank_display.forget()
+            self.blank_display.forget()  # assumes blank is last frame in the framelist
             self.frameList[self.index].tkraise()
+            self.visible = True
             self.frameList[self.index].pack()
 
     def check_switch(self, master):
-        self.flash_window()
         if shared_memory.current_mode != shared_memory.desired_mode:
             self.change_window()
+        if shared_memory.flash_window and shared_memory.current_mode < len(self.frameList) - 1:
+            self.flash_window(flash=True)
+        elif not self.visible:
+            self.flash_window(flash=False)
         master.after(250, lambda: self.check_switch(master))
 
 
