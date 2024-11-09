@@ -115,8 +115,8 @@ class Settings:
         with open("config.ini", "w") as f:
             self.config.write(f)
 
-    def get_fullscreen_state(self) -> int:
-        return int(self.config.get('general', 'fullscreen').replace("'", ""))
+    def get_fullscreen_state(self) -> bool:
+        return bool(self.config.get('general', 'fullscreen'))
 
     def set_fullscreen_state(self, state: int) -> None:
         self.config.set('general', 'fullscreen', str(state))

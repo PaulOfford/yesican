@@ -80,7 +80,7 @@ class Presentation:
         shared_memory.root = tk.Tk()
         shared_memory.root.protocol("WM_DELETE_WINDOW", yesican_shutdown)
 
-        if shared_memory.settings.get_fullscreen_state() == 1:
+        if shared_memory.settings.get_fullscreen_state():
             shared_memory.root.wm_attributes('-fullscreen', 'True')
         shared_memory.root.geometry(
             str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
