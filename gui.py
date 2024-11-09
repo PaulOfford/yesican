@@ -16,8 +16,8 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
 
 
 def next_display() -> None:
-    shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
     shared_memory.flash_window = False
+    shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
 
 
 class GuiBlank(tk.Frame):

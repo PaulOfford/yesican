@@ -39,9 +39,8 @@ class MainWindow:
         shared_memory.current_mode = shared_memory.desired_mode
 
     def flash_window(self) -> None:
-        if shared_memory.eng_rpm >= 7000:
-            stop = True
-        if shared_memory.flash_window:
+        # we shouldn't flash the screen if we are in the config window
+        if shared_memory.flash_window and shared_memory.current_mode != len(self.frameList) - 1:
             if self.visible:
                 self.frameList[self.index].forget()
                 self.blank_display.tkraise()  # assumes blank is last frame in the framelist
