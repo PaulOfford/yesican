@@ -15,13 +15,13 @@ class Backend:
             self.test_data_frame = pd.read_csv('test_data.csv')
             pass
         else:
-            if platform.system() == 'Windows':
-                self.bus_vector = can.interface.Bus(
-                    channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
-                )
-            elif platform.system() == 'Linux':
+            if shared_memory.is_linux_os:
                 self.bus_vector = can.interface.Bus(
                     channel='can0', interface='socketcan', bitrate=100000
+                )
+            else:
+                self.bus_vector = can.interface.Bus(
+                    channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
                 )
 
     def calculate_adjusted_speed(self, dashboard_speed) -> int:

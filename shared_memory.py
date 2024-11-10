@@ -3,6 +3,8 @@ from settings import *
 settings = Settings()
 backend_thread = None
 
+is_linux_os = False
+
 # run_state is used to control the execution and shutdown of yesican
 RUN_STATE_RUNNING = 3
 RUN_STATE_PENDING_SHUTDOWN = 2
@@ -15,7 +17,7 @@ eng_rpm = 0
 pre_calc_gear = 3
 speed = 0
 
-# pit_speed_limit = 50  # kph - this is a default setting
+pit_speed_switch = False  # True - closed, False - open
 
 root = None
 

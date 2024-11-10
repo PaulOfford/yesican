@@ -1,8 +1,11 @@
 import threading
 
+import shared_memory
 from settings import *
 from gui import *
 from backend import *
+
+import switcher
 
 
 def yesican_shutdown():
@@ -52,6 +55,12 @@ class MainWindow:
             self.frameList[self.index].pack()
 
     def check_switch(self, master):
+        # check the physical pit speed limiter switch
+        if switcher.is_switch_on():
+            if not shared_memory.pit_speed_switch:
+                shared_memory.desired_mode = 1
+                shared_memory.pit_speed_switch = True
+
         if shared_memory.current_mode != shared_memory.desired_mode:
             self.change_window()
         if shared_memory.flash_window and shared_memory.current_mode < len(self.frameList) - 1:
@@ -90,5 +99,13 @@ class Presentation:
 
 
 if __name__ == "__main__":
+    if platform.system() == 'Linux':
+        shared_memory.is_linux_os = True
+    elif platform.system() == 'Windows':
+        shared_memory.is_linux_os = False
+    else:
+        print("Unsupported platform")
+        exit(0)
+
     presentation = Presentation()
     presentation.run_presentation()
