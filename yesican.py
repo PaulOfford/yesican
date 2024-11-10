@@ -33,14 +33,17 @@ class MainWindow:
         self.blank_display = GuiBlank(mainframe)
         self.blank_display.forget()
 
-    def change_window(self):
+    def change_window(self, display_mode):
         self.frameList[self.index].forget()
-        self.index = (self.index + 1) % len(self.frameList)
-        self.frameList[self.index].tkraise()
-        self.frameList[self.index].pack()
+        self.frameList[display_mode].tkraise()
+        self.frameList[display_mode].pack()
+        self.index = display_mode
         self.visible = True
 
         shared_memory.current_mode = shared_memory.desired_mode
+
+    def next_window(self):
+        self.change_window((self.index + 1) % len(self.frameList))
 
     def flash_window(self, flash: bool) -> None:
         if self.visible and flash:
@@ -59,14 +62,16 @@ class MainWindow:
         if switcher.is_switch_on():
             if not shared_memory.pit_speed_switch:
                 shared_memory.desired_mode = 1
+                self.change_window(shared_memory.desired_mode)
                 shared_memory.pit_speed_switch = True
         else:
             if shared_memory.pit_speed_switch:
                 shared_memory.desired_mode = 0
+                self.change_window(shared_memory.desired_mode)
                 shared_memory.pit_speed_switch = False
 
         if shared_memory.current_mode != shared_memory.desired_mode:
-            self.change_window()
+            self.next_window()
         if shared_memory.flash_window and shared_memory.current_mode < len(self.frameList) - 1:
             self.flash_window(flash=True)
         elif not self.visible:
