@@ -60,6 +60,10 @@ class MainWindow:
             if not shared_memory.pit_speed_switch:
                 shared_memory.desired_mode = 1
                 shared_memory.pit_speed_switch = True
+        else:
+            if shared_memory.pit_speed_switch:
+                shared_memory.desired_mode = 0
+                shared_memory.pit_speed_switch = False
 
         if shared_memory.current_mode != shared_memory.desired_mode:
             self.change_window()

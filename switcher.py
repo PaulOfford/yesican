@@ -10,7 +10,8 @@ if platform.system() == 'Linux':
 
 def is_switch_on() -> bool:
     if platform.system() == 'Linux':
-        return GPIO.input(16)
+        # as the state is down when the switch is on, we need to invert the return value
+        return not GPIO.input(16)
     else:
         return False
 
