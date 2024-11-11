@@ -38,9 +38,6 @@ class Backend:
                 gear_number = i
                 break
 
-        if gear_number == 0:
-            stop_here = True
-
         return gear_number  # gear number
 
     def get_can_message(self) -> dict:
