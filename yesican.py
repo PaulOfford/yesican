@@ -1,15 +1,22 @@
 import threading
 
+import can_interface
 import shared_memory
 from settings import *
 from gui import *
-from backend import *
+from can_interface import *
 
 import switcher
 
 
 def yesican_shutdown():
     shared_memory.run_state = shared_memory.RUN_STATE_AWAITING_BACKEND
+
+    if shared_memory.bus_vector:
+        # give the can interface a kick in case we don't have incoming messages
+        msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
+        shared_memory.bus_vector.send(msg)
+
     shared_memory.backend_thread.join(0.5)  # wait for up to one second for the backend thread to exit
     shared_memory.root.destroy()
     shared_memory.run_state = shared_memory.RUN_STATE_EXITING
@@ -86,8 +93,8 @@ class Presentation:
         shared_memory.settings.read_config()
 
         # start backend thread
-        backend = Backend()
-        shared_memory.backend_thread = threading.Thread(target=backend.backend_loop)
+        canbus = can_interface.CanInterface()
+        shared_memory.backend_thread = threading.Thread(target=canbus.read_messages)
         shared_memory.backend_thread.start()
 
     def run_presentation(self):

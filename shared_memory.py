@@ -2,10 +2,12 @@ from settings import *
 
 settings = Settings()
 backend_thread = None
+bus_vector = None
 
 is_linux_os = False
 
 # run_state is used to control the execution and shutdown of yesican
+RUN_STATE_CAN_INTERFACE_FAILURE = 4
 RUN_STATE_RUNNING = 3
 RUN_STATE_PENDING_SHUTDOWN = 2
 RUN_STATE_AWAITING_BACKEND = 1

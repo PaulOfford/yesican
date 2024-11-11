@@ -112,11 +112,15 @@ class GuiGearShift(tk.Frame):
         self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
 
     def process_updates(self):
+        global yesican_shutdown
         if shared_memory.current_mode == 0:
             self.update_shift_lights()
             self.update_gear_gauge()
             self.update_rpm_gauge()
-        self.after(250, self.process_updates)
+        if shared_memory.run_state ==shared_memory.RUN_STATE_RUNNING:
+            self.after(250, self.process_updates)
+        else:
+            yesican_shutdown()
 
     def render_screen(self):
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
@@ -244,7 +248,10 @@ class GuiPitSpeed(tk.Frame):
             # self.sim_speed()
             self.update_speed_blocks()
             self.update_speed_gauge()
-        self.after(500, self.process_updates)
+        if shared_memory.run_state ==shared_memory.RUN_STATE_RUNNING:
+            self.after(250, self.process_updates)
+        else:
+            yesican_shutdown()
 
     def render_screen(self):
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
