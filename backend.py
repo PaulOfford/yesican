@@ -52,7 +52,17 @@ class Backend:
             self.test_data_index += 1
         else:
             msg = self.bus_vector.recv()
-            print(hex(msg.arbitration_id), msg.data.hex(' ', -4))
+            if msg.arbitration_id == 436:  # 436 (0x1b4) gives speed
+                # (((Byte[1] - 208) * 256) + Byte[0]) / 16 -> gives mph
+                # therefore
+                # (((Byte[1] - 208) * 256) + Byte[0]) / 10 -> gives kph
+                message_content['speed'] = (((int(msg.data[1]) - 208) * 256) + int(msg.data[0])) / 10
+                # print("Speed (kph): ", message_content['speed'])
+
+            elif msg.arbitration_id == 170:  # 170 (0xAA) gives speed
+                # ((Byte[5] * 256) + Byte[4] ) / 4 -> gives rpm
+                message_content['rpm'] = ((int(msg.data[5]) * 256) + int(msg.data[4])) / 4
+                # print("Revs (rpm): ", message_content['rpm'])
 
         return message_content
 
