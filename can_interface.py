@@ -1,6 +1,9 @@
 import platform
-import shared_memory
 import can
+import time
+import pandas as pd
+
+import shared_memory
 
 
 class CanInterface:
@@ -22,9 +25,25 @@ class CanInterface:
 
         return gear_number  # gear number
 
-    def read_messages(self):
-        shared_memory.run_state = shared_memory.RUN_STATE_RUNNING
+    def read_test_messages(self):
+        test_data_frame = pd.read_csv('test_data.csv')
 
+        for i, row in test_data_frame.iterrows():
+            if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+                time.sleep(0.05)
+                dash_speed = int(row['SPEED BMW (kph)'])
+                shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
+                shared_memory.eng_rpm = int(row['RPM'])
+                shared_memory.pre_calc_gear = self.calculate_gear(
+                    speed=shared_memory.speed,
+                    rpm=shared_memory.eng_rpm
+                )
+            else:
+                break
+
+        print("Test data feed stopped")
+
+    def read_live_messages(self):
         try:
             if platform.system() == 'Windows':
                 shared_memory.bus_vector = can.interface.Bus(
@@ -68,9 +87,16 @@ class CanInterface:
 
                         count += 1
 
-            if not shared_memory.settings.get_test_mode():
-                # shut the usb2can bus
-                shared_memory.bus_vector.shutdown()
-                print("CAN bus interface closed")
+        shared_memory.bus_vector.shutdown()
+        print("CAN bus interface closed")
 
+    def read_messages(self):
+        shared_memory.run_state = shared_memory.RUN_STATE_RUNNING
+
+        if shared_memory.settings.get_test_mode():
+            self.read_test_messages()
+        else:
+            self.read_live_messages()
+
+        print("Backend thread exiting")
         exit(0)
