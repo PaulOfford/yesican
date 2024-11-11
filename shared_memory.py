@@ -14,7 +14,7 @@ RUN_STATE_EXITING = 0
 run_state = 3  # 3 - running, 2 - pending shutdown, 1 - waiting for backend to stop, 0 - exiting
 
 eng_rpm = 0
-pre_calc_gear = 3
+pre_calc_gear = 0
 speed = 0
 
 pit_speed_switch = False  # True - closed, False - open
