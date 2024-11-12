@@ -7,6 +7,7 @@ import shared_memory
 from yesican import yesican_shutdown
 from _version import __version__
 from my_logger import microsec_message
+from constants import *
 
 
 def create_circle(x, y, r, canvas, color):  # center coordinates, radius
@@ -121,7 +122,7 @@ class GuiGearShift(tk.Frame):
             self.update_rpm_gauge()
             microsec_message(4, "Gear shift display update end")
 
-        if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+        if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
             yesican_shutdown()
@@ -254,7 +255,7 @@ class GuiPitSpeed(tk.Frame):
             self.update_speed_blocks()
             self.update_speed_gauge()
             microsec_message(4, "Pit speed display update end")
-        if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+        if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
             yesican_shutdown()
@@ -326,7 +327,7 @@ class GuiConfig(tk.Frame):
 
     def quit_yesican(self):
         self.update_config()
-        shared_memory.run_state = shared_memory.RUN_STATE_PENDING_SHUTDOWN
+        shared_memory.set_run_state(RUN_STATE_PENDING_SHUTDOWN)
         yesican_shutdown()
 
     def render_screen(self):
@@ -430,7 +431,7 @@ class GuiConfig(tk.Frame):
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
         blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
         blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
-        version.grid(row=8, column=0, sticky='w', padx=10, pady=5)
+        version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
         quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
         # version.grid(row=3, column=1)
         next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)

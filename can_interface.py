@@ -6,15 +6,19 @@ import pandas as pd
 import shared_memory
 import my_logger
 
+from constants import *
+
 
 class CanInterface:
     bus_vector = None
 
-    def calculate_adjusted_speed(self, dashboard_speed) -> int:
+    @staticmethod
+    def calculate_adjusted_speed(dashboard_speed) -> int:
         correction_factor = shared_memory.settings.get_speed_correction_factor()
         return int(dashboard_speed * correction_factor)  # kph
 
-    def calculate_gear(self, speed: int, rpm: int) -> int:
+    @staticmethod
+    def calculate_gear(speed: int, rpm: int) -> int:
         gearing_factor_values = shared_memory.settings.get_gearing_factor()
         kph_per_thousand_rpm = int(speed / (max(rpm, 1) / 1000))
         gear_number = 0
@@ -30,7 +34,7 @@ class CanInterface:
         test_data_frame = pd.read_csv('test_data.csv')
 
         for i, row in test_data_frame.iterrows():
-            if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+            if shared_memory.get_run_state() == RUN_STATE_RUNNING:
                 time.sleep(0.05)
                 my_logger.microsec_message(5, "CAN message received")
 
@@ -58,16 +62,17 @@ class CanInterface:
                     channel='can0', interface='socketcan', bitrate=100000
                 )
         except:
-            my_logger.microsec_message(1, "Failed to open the interface to the USB2CAN adapter")
-            shared_memory.run_state = shared_memory.RUN_STATE_CAN_INTERFACE_FAILURE
+            my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
+            my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
+            shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
 
-        if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+        if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             with shared_memory.bus_vector as bus:
 
                 count = 1
-                while shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
+                while shared_memory.get_run_state() == RUN_STATE_RUNNING:
                     for msg in bus:
-                        if shared_memory.run_state != shared_memory.RUN_STATE_RUNNING:
+                        if shared_memory.get_run_state() != RUN_STATE_RUNNING:
                             break
 
                         # print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
@@ -87,7 +92,7 @@ class CanInterface:
                             shared_memory.pre_calc_gear = self.calculate_gear(
                                 speed=shared_memory.speed,
                                 rpm=shared_memory.eng_rpm
-                        )
+                            )
 
                         count += 1
 
@@ -95,7 +100,7 @@ class CanInterface:
             my_logger.microsec_message(1, "CAN bus interface closed")
 
     def read_messages(self):
-        shared_memory.run_state = shared_memory.RUN_STATE_RUNNING
+        shared_memory.set_run_state(RUN_STATE_RUNNING)
         my_logger.microsec_message(1, "Backend started")
 
         if shared_memory.settings.get_test_mode():
@@ -103,5 +108,6 @@ class CanInterface:
         else:
             self.read_live_messages()
 
+        shared_memory.set_run_state(RUN_STATE_BACKEND_STOPPED)
         my_logger.microsec_message(1, "Backend thread exiting")
         exit(0)

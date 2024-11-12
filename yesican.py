@@ -1,21 +1,24 @@
 import platform
 import threading
+import time
 import tkinter as tk
 import can
 
 import switcher
 import shared_memory
 
-from settings import Settings
+from settings_code import Settings
 from gui import *
 from can_interface import CanInterface
 from _version import __version__
 from my_logger import microsec_message
+from constants import *
 
 
 def yesican_shutdown():
     microsec_message(1, "Shutdown requested")
-    shared_memory.run_state = shared_memory.RUN_STATE_AWAITING_BACKEND
+    shared_memory.run_state = RUN_STATE_AWAITING_BACKEND
+    time.sleep(0.2)
 
     if shared_memory.bus_vector:
         microsec_message(1, "Give the backend a kick to trigger thread exit")
@@ -23,11 +26,12 @@ def yesican_shutdown():
         msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
         shared_memory.bus_vector.send(msg)
 
-    microsec_message(1, "Shutdown waiting for the backend thread to exit")
-    shared_memory.backend_thread.join(0.5)  # wait for up to one second for the backend thread to exit
+    microsec_message(1, "Shutdown checking that the backend thread has exited")
+    shared_memory.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
+
     shared_memory.root.destroy()
     microsec_message(1, "Shutdown done - exiting")
-    shared_memory.run_state = shared_memory.RUN_STATE_EXITING
+    shared_memory.run_state = RUN_STATE_EXITING
     exit(0)
 
 
