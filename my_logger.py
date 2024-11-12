@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime
+import shared_memory
 
-current_log_level = 2
-
-def logmsg(log_level, msg_text):
-    if log_level <= current_log_level:
-        now = datetime.now(timezone.utc)
-        date_time = now.strftime("%Y-%m-%d %H:%M:%SZ -")
-        # we need to eliminate the message terminator as it's not supported by print in UTF8 mode
-        print(date_time, msg_text)
+def microsec_message(log_level, msg_text: str):
+    if log_level <= shared_memory.settings.get_log_level():
+        now = datetime.now()
+        # we construct the whole print string before calling print() to avoid
+        # gui and backend thread logging clashing and so creating mixed content
+        log_msg = now.strftime("%Y-%m-%d %H:%M:%S.%f") + " " + msg_text + "\n"
+        print(log_msg, end='')

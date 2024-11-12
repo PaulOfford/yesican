@@ -17,5 +17,6 @@ def is_switch_on() -> bool:
 
 def end_gpio():
     # Clean up on exit
+    # not used at the moment due to concerns that this may clobber the GPIO-attached display
     GPIO.cleanup()
 

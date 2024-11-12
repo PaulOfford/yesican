@@ -1,24 +1,32 @@
+import platform
 import threading
-
-import can_interface
-import shared_memory
-from settings import *
-from gui import *
-from can_interface import *
+import tkinter as tk
+import can
 
 import switcher
+import shared_memory
+
+from settings import Settings
+from gui import *
+from can_interface import CanInterface
+from _version import __version__
+from my_logger import microsec_message
 
 
 def yesican_shutdown():
+    microsec_message(1, "Shutdown requested")
     shared_memory.run_state = shared_memory.RUN_STATE_AWAITING_BACKEND
 
     if shared_memory.bus_vector:
+        microsec_message(1, "Give the backend a kick to trigger thread exit")
         # give the can interface a kick in case we don't have incoming messages
         msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
         shared_memory.bus_vector.send(msg)
 
+    microsec_message(1, "Shutdown waiting for the backend thread to exit")
     shared_memory.backend_thread.join(0.5)  # wait for up to one second for the backend thread to exit
     shared_memory.root.destroy()
+    microsec_message(1, "Shutdown done - exiting")
     shared_memory.run_state = shared_memory.RUN_STATE_EXITING
     exit(0)
 
@@ -50,7 +58,9 @@ class MainWindow:
         shared_memory.current_mode = shared_memory.desired_mode
 
     def next_window(self):
-        self.change_window((self.index + 1) % len(self.frameList))
+        next_mode = (self.index + 1) % len(self.frameList)
+        microsec_message(2, "Next button to mode " + str(next_mode))
+        self.change_window(next_mode)
 
     def flash_window(self, flash: bool) -> None:
         if self.visible and flash:
@@ -68,11 +78,13 @@ class MainWindow:
         # check the physical pit speed limiter switch
         if switcher.is_switch_on():
             if not shared_memory.pit_speed_switch:
+                microsec_message(1, "Switch to Pit Speed display")
                 shared_memory.desired_mode = 1
                 self.change_window(shared_memory.desired_mode)
                 shared_memory.pit_speed_switch = True
         else:
             if shared_memory.pit_speed_switch:
+                microsec_message(1, "Switch to Gear Shift display")
                 shared_memory.desired_mode = 0
                 self.change_window(shared_memory.desired_mode)
                 shared_memory.pit_speed_switch = False
@@ -83,6 +95,7 @@ class MainWindow:
             self.flash_window(flash=True)
         elif not self.visible:
             self.flash_window(flash=False)
+        # this doesn't have to run at a high frequency as it only processes button and switch events
         master.after(250, lambda: self.check_switch(master))
 
 
@@ -93,11 +106,13 @@ class Presentation:
         shared_memory.settings.read_config()
 
         # start backend thread
-        canbus = can_interface.CanInterface()
+        canbus = CanInterface()
         shared_memory.backend_thread = threading.Thread(target=canbus.read_messages)
         shared_memory.backend_thread.start()
 
-    def run_presentation(self):
+    @staticmethod
+    def run_presentation():
+        microsec_message(1, "Presentation started")
         shared_memory.root = tk.Tk()
         shared_memory.root.protocol("WM_DELETE_WINDOW", yesican_shutdown)
         shared_memory.root.config(cursor='none')
@@ -115,12 +130,14 @@ class Presentation:
 
 
 if __name__ == "__main__":
+    microsec_message(1, "YesICan " + __version__ + " starting")
+
     if platform.system() == 'Linux':
         shared_memory.is_linux_os = True
     elif platform.system() == 'Windows':
         shared_memory.is_linux_os = False
     else:
-        print("Unsupported platform")
+        microsec_message(1, "Unsupported platform")
         exit(0)
 
     presentation = Presentation()

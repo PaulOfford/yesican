@@ -4,6 +4,7 @@ import time
 import pandas as pd
 
 import shared_memory
+import my_logger
 
 
 class CanInterface:
@@ -31,6 +32,8 @@ class CanInterface:
         for i, row in test_data_frame.iterrows():
             if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
                 time.sleep(0.05)
+                my_logger.microsec_message(5, "CAN message received")
+
                 dash_speed = int(row['SPEED BMW (kph)'])
                 shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
                 shared_memory.eng_rpm = int(row['RPM'])
@@ -38,10 +41,11 @@ class CanInterface:
                     speed=shared_memory.speed,
                     rpm=shared_memory.eng_rpm
                 )
+                my_logger.microsec_message(5, "CAN message processed")
             else:
                 break
 
-        print("Test data feed stopped")
+        my_logger.microsec_message(1, "Test data feed stopped")
 
     def read_live_messages(self):
         try:
@@ -54,7 +58,7 @@ class CanInterface:
                     channel='can0', interface='socketcan', bitrate=100000
                 )
         except:
-            print("Failed to open the interface to the USB2CAN adapter")
+            my_logger.microsec_message(1, "Failed to open the interface to the USB2CAN adapter")
             shared_memory.run_state = shared_memory.RUN_STATE_CAN_INTERFACE_FAILURE
 
         if shared_memory.run_state == shared_memory.RUN_STATE_RUNNING:
@@ -87,16 +91,17 @@ class CanInterface:
 
                         count += 1
 
-        shared_memory.bus_vector.shutdown()
-        print("CAN bus interface closed")
+            shared_memory.bus_vector.shutdown()
+            my_logger.microsec_message(1, "CAN bus interface closed")
 
     def read_messages(self):
         shared_memory.run_state = shared_memory.RUN_STATE_RUNNING
+        my_logger.microsec_message(1, "Backend started")
 
         if shared_memory.settings.get_test_mode():
             self.read_test_messages()
         else:
             self.read_live_messages()
 
-        print("Backend thread exiting")
+        my_logger.microsec_message(1, "Backend thread exiting")
         exit(0)

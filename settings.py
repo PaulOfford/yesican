@@ -110,6 +110,9 @@ class Settings:
         else:
             return False
 
+    def get_log_level(self) -> int:
+        return int(self.config.get('logging', 'log_level'))
+
     def get_pit_speed_limit(self) -> int:
         return int(self.config.get('pit', 'pit_speed_limit'))
 
