@@ -23,6 +23,9 @@ def next_display() -> None:
     shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
 
 
+def round_to_fifty(number: int) -> int:
+    return 50 * round(number/50)
+
 class GuiBlank(tk.Frame):
 
     def __init__(self, parent):
@@ -92,7 +95,7 @@ class GuiGearShift(tk.Frame):
         return gear_text_color
 
     def update_rpm_gauge(self):
-        self.sv_rpm.set(str(shared_memory.eng_rpm))
+        self.sv_rpm.set(str(round_to_fifty(shared_memory.eng_rpm)))
 
     def update_shift_lights(self):
         for i, light in enumerate(self.led):
