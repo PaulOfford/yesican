@@ -379,6 +379,7 @@ class GuiConfig(tk.Frame):
         self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         fullscreen_check_box = tk.Checkbutton(
             self, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
+            borderwidth=0,
             command=lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
         )
 
