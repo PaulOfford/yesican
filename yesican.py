@@ -24,7 +24,11 @@ def yesican_shutdown():
         microsec_message(1, "Give the backend a kick to trigger thread exit")
         # give the can interface a kick in case we don't have incoming messages
         msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
-        shared_memory.bus_vector.send(msg)
+        try:
+            # this may not work if can interface is already shut
+            shared_memory.bus_vector.send(msg)
+        except:
+            pass
 
     microsec_message(1, "Shutdown checking that the backend thread has exited")
     shared_memory.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
