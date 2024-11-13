@@ -28,7 +28,7 @@ def yesican_shutdown():
             # this may not work if can interface is already shut
             shared_memory.bus_vector.send(msg)
         except:
-            pass
+            microsec_message(1, "Kicker not needed - backend thread has already exited")
 
     microsec_message(1, "Shutdown checking that the backend thread has exited")
     shared_memory.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
