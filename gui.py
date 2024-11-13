@@ -429,14 +429,14 @@ class GuiConfig(tk.Frame):
 
         screen_title.grid(row=0, column=0, columnspan=3, padx=10)
 
-        speed_limit.grid(row=1, column=0, sticky='e', padx=10, pady=5)
-        speed_box.grid(row=1, column=1, sticky='w', padx=10, pady=5)
+        speed_limit.grid(row=1, column=0, columnspan=2, sticky='e', padx=10, pady=5)
+        speed_box.grid(row=1, column=2, sticky='w', padx=10, pady=5)
 
-        correction_factor_label.grid(row=2, column=0, sticky='e', padx=10, pady=5)
-        correction_factor.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+        correction_factor_label.grid(row=2, column=0, columnspan=2, sticky='e', padx=10, pady=5)
+        correction_factor.grid(row=2, column=2, sticky='w', padx=10, pady=5)
 
-        fullscreen.grid(row=3, column=0, sticky='e', padx=10, pady=5)
-        fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
+        fullscreen.grid(row=3, column=0, columnspan=2, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=3, column=2, sticky='w', padx=10, pady=5)
 
         blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
