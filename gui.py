@@ -382,11 +382,6 @@ class GuiConfig(tk.Frame):
             command=lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
         )
 
-        version = tk.Label(
-            self, text=__version__,
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
-        )
-
         blank4 = tk.Label(
             self, text=" ",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
@@ -412,13 +407,29 @@ class GuiConfig(tk.Frame):
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
-        quit_button = tk.Button(self, text='Quit', command=self.quit_yesican)
-        next_button = tk.Button(self, text='Next', command=self.next_display)
+        # this footer frame will be placed inside the mainframe in the last row
+        footer = tk.Frame(self)
+        footer.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+
+
+        quit_button = tk.Button(footer, text='Quit', command=self.quit_yesican)
+        version = tk.Label(
+            footer, text="v " + __version__,
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
+        )
+        next_button = tk.Button(footer, text='Next', command=self.next_display)
+
+        footer.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
+        footer.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.2))
+        footer.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
+        footer.rowconfigure(0, weight=1)
+        quit_button.grid(row=0, column=0, sticky='sw', padx=10, pady=10)
+        version.grid(row=0, column=1, sticky='ew', padx=10, pady=10)
+        next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
 
         # define grid
-        self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
-        self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.2))
-        self.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
+        self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
+        self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
@@ -427,24 +438,27 @@ class GuiConfig(tk.Frame):
         self.rowconfigure(5, weight=1)
         self.rowconfigure(6, weight=1)
 
-        screen_title.grid(row=0, column=0, columnspan=3, padx=10)
+        screen_title.grid(row=0, column=0, columnspan=2, padx=10)
 
-        speed_limit.grid(row=1, column=0, columnspan=2, sticky='e', padx=10, pady=5)
-        speed_box.grid(row=1, column=2, sticky='w', padx=10, pady=5)
+        speed_limit.grid(row=1, column=0, sticky='e', padx=10, pady=5)
+        speed_box.grid(row=1, column=1, sticky='w', padx=10, pady=5)
 
-        correction_factor_label.grid(row=2, column=0, columnspan=2, sticky='e', padx=10, pady=5)
-        correction_factor.grid(row=2, column=2, sticky='w', padx=10, pady=5)
+        correction_factor_label.grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        correction_factor.grid(row=2, column=1, sticky='w', padx=10, pady=5)
 
-        fullscreen.grid(row=3, column=0, columnspan=2, sticky='e', padx=10, pady=5)
-        fullscreen_check_box.grid(row=3, column=2, sticky='w', padx=10, pady=5)
+        fullscreen.grid(row=3, column=0, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
 
         blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
         blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
         blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
-        quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
-        version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
-        next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)
+        footer.grid(row=9, column=0, columnspan=3, sticky='ew')
+
+
+        # quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
+        # version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
+        # next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)
 
         # pack this frame with the content above
         self.pack()
