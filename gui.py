@@ -416,9 +416,9 @@ class GuiConfig(tk.Frame):
         next_button = tk.Button(self, text='Next', command=self.next_display)
 
         # define grid
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=1)
+        self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
+        self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
+        self.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
@@ -442,9 +442,8 @@ class GuiConfig(tk.Frame):
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
         blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
         blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
-        version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
         quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
-        # version.grid(row=3, column=1)
+        version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
         next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)
 
         # pack this frame with the content above
