@@ -416,9 +416,9 @@ class GuiConfig(tk.Frame):
         next_button = tk.Button(self, text='Next', command=self.next_display)
 
         # define grid
-        self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
-        self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
-        self.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()/3))
+        self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
+        self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.2))
+        self.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
