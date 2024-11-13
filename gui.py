@@ -309,6 +309,7 @@ class GuiPitSpeed(tk.Frame):
 class GuiConfig(tk.Frame):
 
     pit_speed = None  # StringVar
+    speed_correction_factor = None  # StringVar
     fs_status = None  # IntVar
 
     speed_blocks = None
@@ -322,6 +323,7 @@ class GuiConfig(tk.Frame):
 
     def update_config(self) -> None:
         shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
+        shared_memory.settings.set_speed_correction_factor(self.speed_correction_factor.get())
         pass
 
     def next_display(self) -> None:
@@ -359,6 +361,15 @@ class GuiConfig(tk.Frame):
         self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         speed_box = tk.Entry(self, textvariable=self.pit_speed)
 
+        correction_factor_label = tk.Label(
+            self, text="Speed Correction Factor:",
+            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
+        )
+
+        self.speed_correction_factor = tk.StringVar()
+        self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
+        correction_factor = tk.Entry(self, textvariable=self.speed_correction_factor)
+
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
@@ -373,11 +384,6 @@ class GuiConfig(tk.Frame):
 
         version = tk.Label(
             self, text=__version__,
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
-        )
-
-        blank3 = tk.Label(
-            self, text=" ",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
@@ -426,10 +432,12 @@ class GuiConfig(tk.Frame):
         speed_limit.grid(row=1, column=0, sticky='e', padx=10, pady=5)
         speed_box.grid(row=1, column=1, sticky='w', padx=10, pady=5)
 
-        fullscreen.grid(row=2, column=0, sticky='e', padx=10, pady=5)
-        fullscreen_check_box.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+        correction_factor_label.grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        correction_factor.grid(row=2, column=1, sticky='w', padx=10, pady=5)
 
-        blank3.grid(row=3, column=0, sticky='w', padx=10, pady=5)
+        fullscreen.grid(row=3, column=0, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
+
         blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
         blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)

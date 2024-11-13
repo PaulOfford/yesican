@@ -121,6 +121,14 @@ class Settings:
         with open("config.ini", "w") as f:
             self.config.write(f)
 
+    def get_speed_correction_factor(self) -> float:
+        return float(self.config.get('general', 'speed_correction_factor'))
+
+    def set_speed_correction_factor(self, factor: float) -> None:
+        self.config.set('general', 'speed_correction_factor', str(factor))
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+
     def get_fullscreen_state(self) -> bool:
         if self.config.get('general', 'fullscreen').upper() == 'TRUE':
             return True
