@@ -151,6 +151,9 @@ class GuiGearShift(tk.Frame):
         font_gear = font.Font(
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
         )
+        font_inputs = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
+        )
 
         # widgets
         screen_title = tk.Label(
@@ -187,7 +190,7 @@ class GuiGearShift(tk.Frame):
         screen_title.grid(row=0, column=0)
         self.shift_lights.grid(row=1, column=0)
         self.gear_value.grid(row=2, column=0)
-        footer.grid(row=3, column=0, sticky='ew', padx=10, pady=10)
+        footer.grid(row=3, column=0, sticky='ew')
 
         # pack this frame with the content above
         self.pack()
@@ -315,7 +318,7 @@ class GuiPitSpeed(tk.Frame):
         screen_title.grid(row=0, column=0)
         self.speed_blocks.grid(row=1, column=0)
         self.speed_value.grid(row=2, column=0)
-        footer.grid(row=3, column=0, sticky='ew', padx=10, pady=10)
+        footer.grid(row=3, column=0, sticky='ew')
 
         # pack this frame with the content above
         self.pack()
