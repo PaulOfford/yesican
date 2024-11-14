@@ -480,7 +480,7 @@ class GuiConfig(tk.Frame):
     def render_screen(self):
         format_outer_frame(self)
 
-        header = get_header_frame(self, shared_memory.settings.get_shift_screen_title())
+        header = get_header_frame(self, shared_memory.settings.get_conf_screen_title())
         body = self.get_content_frame(self)
         footer = self.get_footer_frame(self)
 
