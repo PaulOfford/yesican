@@ -27,6 +27,14 @@ def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
 
 
+def build_header(parent: tk.Frame) -> tk.Frame:
+    header = tk.Frame(parent)
+    header.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+    header.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()))
+    header.rowconfigure(0, weight=1)
+    return header
+
+
 def build_footer(parent: tk.Frame) -> tk.Frame:
     footer = tk.Frame(parent)
     # Builds a 3 x 1 grid
@@ -67,6 +75,7 @@ class GuiGearShift(tk.Frame):
         super().__init__(parent)
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
+
         self.render_screen()
         self.process_updates()
 
@@ -142,31 +151,56 @@ class GuiGearShift(tk.Frame):
         else:
             yesican_shutdown()
 
+    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
+        font_gear = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
+        )
+
+        content = tk.Frame(self)
+        content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        content.columnconfigure(0, weight=1)
+        content.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)  # 25% for LEDs
+        content.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)  # 50% for gear number
+
+        # widgets
+        shift_lights = self.populate_shift_leds(container=content)
+        shift_lights.grid(row=0, column=0)
+
+        self.gear_value = tk.Label(
+            content, textvariable=self.sv_gear,
+            fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.get_bg_color(), font=font_gear
+        )
+        self.gear_value.grid(row=1, column=0)
+
+        return content
+
     def render_screen(self):
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
 
         font_title = font.Font(
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())/4), weight='normal'
         )
-        font_gear = font.Font(
-            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
-        )
         font_inputs = font.Font(
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
-        # widgets
+        # define grid
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 10% for header
+        self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.70)  # 70% for body
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 15% for footer
+
+        ## HEADER
+        # this header frame will be placed inside the mainframe in the first row
+        header = build_header(self)
         screen_title = tk.Label(
-            self, text=shared_memory.settings.get_shift_screen_title(), width=shared_memory.settings.get_screen_width(),
+            header, text=shared_memory.settings.get_shift_screen_title(), width=shared_memory.settings.get_screen_width(),
             pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
-        self.shift_lights = self.populate_shift_leds(container=self)
+        screen_title.grid(row=0, column=0, sticky='ew')
+        ## /HEADER
 
-        self.gear_value = tk.Label(
-            self, textvariable=self.sv_gear,
-            fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.get_bg_color(), font=font_gear
-        )
-
+        ## FOOTER
         # this footer frame will be placed inside the mainframe in the last row
         footer = build_footer(self)
 
@@ -178,19 +212,15 @@ class GuiGearShift(tk.Frame):
 
         next_button = tk.Button(footer, text='Next', command=next_display)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
+        ## /FOOTER
 
-        # define grid
-        self.columnconfigure(0, weight=1)
-        shared_memory.root.update()
-        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 10% for title
-        self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)  # 25% for LEDs
-        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)  # 50% for gear number
-        self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 15% for footer
+        ## BODY
+        body = self.get_content_frame(self)
+        ## /BODY
 
-        screen_title.grid(row=0, column=0)
-        self.shift_lights.grid(row=1, column=0)
-        self.gear_value.grid(row=2, column=0)
-        footer.grid(row=3, column=0, sticky='ew')
+        header.grid(row=0, column=0, sticky='ew')
+        body.grid(row=1, column=0, sticky='ew')
+        footer.grid(row=2, column=0, sticky='ew')
 
         # pack this frame with the content above
         self.pack()
@@ -432,13 +462,13 @@ class GuiConfig(tk.Frame):
         # define grid
         self.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
         self.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
-        self.rowconfigure(4, weight=1)
+        self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
+        self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
+        self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
+        self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
+        self.rowconfigure(4, weight=1, minsize=shared_memory.root.winfo_height() * 0.10)
         self.rowconfigure(5, weight=1)
-        self.rowconfigure(6, weight=1)
+        self.rowconfigure(6, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
 
         screen_title.grid(row=0, column=0, columnspan=2, padx=10)
 
@@ -452,9 +482,6 @@ class GuiConfig(tk.Frame):
         fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
 
         blank4.grid(row=4, column=0, sticky='w', padx=10, pady=5)
-        blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
-        blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
-        blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
-        footer.grid(row=9, column=0, columnspan=2, sticky='ew')
+        footer.grid(row=6, column=0, columnspan=2, sticky='ew')
 
         self.pack()
