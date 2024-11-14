@@ -26,6 +26,18 @@ def next_display() -> None:
 def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
 
+
+def build_footer(parent: tk.Frame) -> tk.Frame:
+    footer = tk.Frame(parent)
+    # Builds a 3 x 1 grid
+    footer.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+    footer.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.4))
+    footer.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.2))
+    footer.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.4))
+    footer.rowconfigure(0, weight=1)
+    return footer
+
+
 class GuiBlank(tk.Frame):
 
     def __init__(self, parent):
@@ -141,9 +153,9 @@ class GuiGearShift(tk.Frame):
         )
 
         # widgets
-        self.screen_title = tk.Label(
-            self, text=shared_memory.settings.get_shift_screen_title(),
-            width=20, pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
+        screen_title = tk.Label(
+            self, text=shared_memory.settings.get_shift_screen_title(), width=shared_memory.settings.get_screen_width(),
+            pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
         self.shift_lights = self.populate_shift_leds(container=self)
 
@@ -152,29 +164,30 @@ class GuiGearShift(tk.Frame):
             fg=self.gear_color(shared_memory.eng_rpm), bg=shared_memory.settings.get_bg_color(), font=font_gear
         )
 
-        self.sv_rpm.set(str(shared_memory.eng_rpm))
-        self.rpm_label = tk.Label(
-            self, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.get_bg_color(), font=font_title
-        )
+        # this footer frame will be placed inside the mainframe in the last row
+        footer = build_footer(self)
 
-        self.next_button = tk.Button(self, text='Next', command=next_display)
+        self.sv_rpm.set(str(shared_memory.eng_rpm))
+        rpm_label = tk.Label(
+            footer, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.get_bg_color(), font=font_title
+        )
+        rpm_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
+
+        next_button = tk.Button(footer, text='Next', command=next_display)
+        next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
 
         # define grid
         self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=1)
-
         shared_memory.root.update()
         self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 10% for title
         self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)  # 25% for LEDs
         self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)  # 50% for gear number
         self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 15% for footer
 
-        self.screen_title.grid(row=0, column=0, columnspan=3)
-        self.shift_lights.grid(row=1, column=0, columnspan=3)
-        self.gear_value.grid(row=2, column=0, columnspan=3)
-        self.rpm_label.grid(row=3, column=0, sticky='sw', padx=5, pady=5)
-        self.next_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
+        screen_title.grid(row=0, column=0)
+        self.shift_lights.grid(row=1, column=0)
+        self.gear_value.grid(row=2, column=0)
+        footer.grid(row=3, column=0, sticky='ew', padx=10, pady=10)
 
         # pack this frame with the content above
         self.pack()
@@ -275,8 +288,8 @@ class GuiPitSpeed(tk.Frame):
 
         # widgets
         screen_title = tk.Label(
-            self, text=shared_memory.settings.get_pit_screen_title(),
-            width=20, pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
+            self, text=shared_memory.settings.get_pit_screen_title(), width=shared_memory.settings.get_screen_width(),
+            pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
         )
         self.speed_blocks = self.create_gauge(container=self)
 
@@ -285,22 +298,24 @@ class GuiPitSpeed(tk.Frame):
             fg=self.speed_color, bg=shared_memory.settings.get_bg_color(), font=font_gear
         )
 
-        next_button = tk.Button(self, text='Next', command=next_display)
+        # this footer frame will be placed inside the mainframe in the last row
+        footer = build_footer(self)
+
+        next_button = tk.Button(footer, text='Next', command=next_display)
+        next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
 
         # define grid
         self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=1)
         shared_memory.root.update()
         self.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
         self.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.25)
         self.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.45)
         self.rowconfigure(3, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)
 
-        screen_title.grid(row=0, column=0, columnspan=3)
-        self.speed_blocks.grid(row=1, column=0, columnspan=3)
-        self.speed_value.grid(row=2, column=0, columnspan=3)
-        next_button.grid(row=3, column=2, sticky='se', padx=10, pady=10)
+        screen_title.grid(row=0, column=0)
+        self.speed_blocks.grid(row=1, column=0)
+        self.speed_value.grid(row=2, column=0)
+        footer.grid(row=3, column=0, sticky='ew', padx=10, pady=10)
 
         # pack this frame with the content above
         self.pack()
@@ -317,8 +332,13 @@ class GuiConfig(tk.Frame):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         self.pit_speed = tk.StringVar()
+        self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
+        self.speed_correction_factor = tk.StringVar()
+        self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
         self.fs_status = tk.IntVar()
+        self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         self.render_screen()
 
     def update_config(self) -> None:
@@ -336,8 +356,6 @@ class GuiConfig(tk.Frame):
         yesican_shutdown()
 
     def render_screen(self):
-        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
-
         font_title = font.Font(
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal'
         )
@@ -356,27 +374,18 @@ class GuiConfig(tk.Frame):
             self, text="Pit Lane Speed Limit (kph):",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
-
-        self.pit_speed = tk.StringVar()
-        self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         speed_box = tk.Entry(self, textvariable=self.pit_speed)
 
         correction_factor_label = tk.Label(
             self, text="Speed Correction Factor:",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
-
-        self.speed_correction_factor = tk.StringVar()
-        self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
         correction_factor = tk.Entry(self, textvariable=self.speed_correction_factor)
 
         fullscreen = tk.Label(
             self, text="Fullscreen Mode:",
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
-
-        self.fs_status = tk.IntVar()
-        self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         fullscreen_check_box = tk.Checkbutton(
             self, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
             borderwidth=0,
@@ -403,15 +412,8 @@ class GuiConfig(tk.Frame):
             fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
         )
 
-        blank8 = tk.Label(
-            self, text=" ",
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=font_inputs
-        )
-
         # this footer frame will be placed inside the mainframe in the last row
-        footer = tk.Frame(self)
-        footer.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
-
+        footer = build_footer(self)
 
         quit_button = tk.Button(footer, text='Quit', command=self.quit_yesican)
         version = tk.Label(
@@ -420,10 +422,6 @@ class GuiConfig(tk.Frame):
         )
         next_button = tk.Button(footer, text='Next', command=self.next_display)
 
-        footer.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
-        footer.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.2))
-        footer.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.4))
-        footer.rowconfigure(0, weight=1)
         quit_button.grid(row=0, column=0, sticky='sw', padx=10, pady=10)
         version.grid(row=0, column=1, sticky='ew', padx=10, pady=10)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
@@ -454,12 +452,6 @@ class GuiConfig(tk.Frame):
         blank5.grid(row=5, column=0, sticky='w', padx=10, pady=5)
         blank6.grid(row=6, column=0, sticky='w', padx=10, pady=5)
         blank7.grid(row=7, column=0, sticky='w', padx=10, pady=5)
-        footer.grid(row=9, column=0, columnspan=3, sticky='ew')
+        footer.grid(row=9, column=0, columnspan=2, sticky='ew')
 
-
-        # quit_button.grid(row=9, column=0, sticky='sw', padx=10, pady=10)
-        # version.grid(row=9, column=1, sticky='ew', padx=10, pady=10)
-        # next_button.grid(row=9, column=2, sticky='se', padx=10, pady=10)
-
-        # pack this frame with the content above
         self.pack()
