@@ -32,10 +32,15 @@ class CanInterface:
 
     def read_test_messages(self):
         test_data_frame = pd.read_csv('test_data.csv')
+        last_time_offset = 0
 
         for i, row in test_data_frame.iterrows():
             if shared_memory.get_run_state() == RUN_STATE_RUNNING:
-                time.sleep(0.05)
+                # calculate the delay needed
+                time_offset = float(row['Time (s)'])
+                time.sleep(time_offset - last_time_offset)
+                last_time_offset = time_offset
+
                 my_logger.microsec_message(5, "Test message read")
 
                 dash_speed = int(row['SPEED BMW (kph)'])
