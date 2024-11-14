@@ -131,6 +131,7 @@ class Presentation:
             str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
         )
         shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
+        shared_memory.root.update()  # we have to do this so that later code can get the window size
 
         window = MainWindow(shared_memory.root)
         shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
