@@ -109,6 +109,9 @@ class GuiGearShift(tk.Frame):
         self.font_gear = font.Font(
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
         )
+        self.font_inputs = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
+        )
 
         self.render_screen()
         self.process_updates()
@@ -213,12 +216,14 @@ class GuiGearShift(tk.Frame):
 
         self.sv_rpm.set(str(shared_memory.eng_rpm))
         rpm_label = tk.Label(
-            footer, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.get_bg_color(), font=self.font_title
+            footer, textvariable=self.sv_rpm, fg="white",
+            bg=shared_memory.settings.get_bg_color(), font=self.font_title
         )
         rpm_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
 
         clutch_label = tk.Label(
-            footer, textvariable=self.sv_clutch, fg="white", bg=shared_memory.settings.get_bg_color(), font=self.font_title
+            footer, textvariable=self.sv_clutch, fg="white",
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         clutch_label.grid(row=0, column=1, sticky='ew', padx=5, pady=5)
 
