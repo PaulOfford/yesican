@@ -36,7 +36,7 @@ class CanInterface:
         for i, row in test_data_frame.iterrows():
             if shared_memory.get_run_state() == RUN_STATE_RUNNING:
                 time.sleep(0.05)
-                my_logger.microsec_message(5, "CAN message received")
+                my_logger.microsec_message(5, "Test message read")
 
                 dash_speed = int(row['SPEED BMW (kph)'])
                 shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
@@ -45,7 +45,7 @@ class CanInterface:
                     speed=shared_memory.speed,
                     rpm=shared_memory.eng_rpm
                 )
-                my_logger.microsec_message(5, "CAN message processed")
+                my_logger.microsec_message(5, "Test message processed")
             else:
                 break
 
