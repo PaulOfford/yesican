@@ -82,6 +82,7 @@ class GuiGearShift(tk.Frame):
 
     sv_rpm = None
     sv_gear = None
+    sv_clutch = None
 
     gear_value = None
 
@@ -100,6 +101,7 @@ class GuiGearShift(tk.Frame):
 
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
+        self.sv_clutch = tk.StringVar()
 
         self.font_title = font.Font(
             family='Ariel', size=int(shared_memory.settings.get_base_font_size() / 4), weight='normal'
@@ -176,6 +178,10 @@ class GuiGearShift(tk.Frame):
             self.update_shift_lights()
             self.update_gear_gauge()
             self.update_rpm_gauge()
+            if shared_memory.clutch_depressed:
+                self.sv_clutch.set("Clutch")
+            else:
+                self.sv_clutch.set(" ")
             microsec_message(4, "Gear shift display update end")
 
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
@@ -210,6 +216,11 @@ class GuiGearShift(tk.Frame):
             footer, textvariable=self.sv_rpm, fg="white", bg=shared_memory.settings.get_bg_color(), font=self.font_title
         )
         rpm_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
+
+        clutch_label = tk.Label(
+            footer, textvariable=self.sv_clutch, fg="white", bg=shared_memory.settings.get_bg_color(), font=self.font_title
+        )
+        clutch_label.grid(row=0, column=1, sticky='ew', padx=5, pady=5)
 
         next_button = tk.Button(footer, text='Next', command=next_display)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)

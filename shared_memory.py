@@ -11,6 +11,7 @@ run_state = 3  # see constants.py for a list of run states
 eng_rpm = 0
 pre_calc_gear = 0
 speed = 0
+clutch_depressed = False
 
 pit_speed_switch = False  # True - closed, False - open
 

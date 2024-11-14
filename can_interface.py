@@ -99,6 +99,12 @@ class CanInterface:
                                 rpm=shared_memory.eng_rpm
                             )
 
+                        elif msg.arbitration_id == 168:  # 168 (0xA8) contains clutch status
+                            if msg.data[5] & 0x01:
+                                shared_memory.clutch_depressed = True
+                            else:
+                                shared_memory.clutch_depressed = False
+
                         count += 1
 
             shared_memory.bus_vector.shutdown()
