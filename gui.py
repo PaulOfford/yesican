@@ -168,13 +168,12 @@ class GuiGearShift(tk.Frame):
                 break
 
     def update_gear_gauge(self):
-        if not shared_memory.clutch_depressed or shared_memory.speed == 0:
-            if shared_memory.pre_calc_gear == 0:
-                displayed_gear = 'N'
-            else:
-                displayed_gear = str(shared_memory.pre_calc_gear)
-            self.sv_gear.set(displayed_gear)
-            self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
+        if shared_memory.pre_calc_gear == 0:
+            displayed_gear = 'N'
+        else:
+            displayed_gear = str(shared_memory.pre_calc_gear)
+        self.sv_gear.set(displayed_gear)
+        self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
 
     def process_updates(self):
         if shared_memory.current_mode == 0:

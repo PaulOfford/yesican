@@ -46,11 +46,15 @@ class CanInterface:
                 dash_speed = int(row['SPEED BMW (kph)'])
                 shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
                 shared_memory.eng_rpm = int(row['RPM'])
-                shared_memory.pre_calc_gear = self.calculate_gear(
-                    speed=shared_memory.speed,
-                    rpm=shared_memory.eng_rpm
-                )
+
+                if not shared_memory.clutch_depressed:
+                    shared_memory.pre_calc_gear = self.calculate_gear(
+                        speed=shared_memory.speed,
+                        rpm=shared_memory.eng_rpm
+                    )
+
                 my_logger.microsec_message(5, "Test message processed")
+
             else:
                 break
 
