@@ -98,10 +98,11 @@ class CanInterface:
                             rpm = ((int(msg.data[5]) * 256) + int(msg.data[4])) / 4
                             shared_memory.eng_rpm = int(rpm)
                             # print("Revs (rpm): ", rpm)
-                            shared_memory.pre_calc_gear = self.calculate_gear(
+                            if not shared_memory.clutch_depressed:
+                                shared_memory.pre_calc_gear = self.calculate_gear(
                                 speed=shared_memory.speed,
                                 rpm=shared_memory.eng_rpm
-                            )
+                                )
 
                         elif msg.arbitration_id == 168:  # 168 (0xA8) contains clutch status
                             if msg.data[5] & 0x01:
