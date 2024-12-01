@@ -38,6 +38,11 @@ class CanInterface:
             if shared_memory.get_run_state() == RUN_STATE_RUNNING:
                 # calculate the delay needed
                 time_offset = float(row['Time (s)'])
+
+                # we need to allow for the case where the starting offset is not zero
+                if i == 0:
+                    last_time_offset = time_offset
+
                 time.sleep(time_offset - last_time_offset)
                 last_time_offset = time_offset
 
@@ -53,6 +58,8 @@ class CanInterface:
                         rpm=shared_memory.eng_rpm
                     )
 
+                shared_memory.brake_pressure = int(row['BRAKE PRESS (bar)'])
+
                 my_logger.microsec_message(5, "Test message processed")
 
             else:
@@ -63,11 +70,11 @@ class CanInterface:
     def read_live_messages(self):
         try:
             if platform.system() == 'Windows':
-                shared_memory.bus_vector = can.interface.Bus(
+                self.bus_vector = can.interface.Bus(
                     channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
                 )
             elif platform.system() == 'Linux':
-                shared_memory.bus_vector = can.interface.Bus(
+                self.bus_vector = can.interface.Bus(
                     channel='can0', interface='socketcan', bitrate=100000
                 )
         except:
@@ -76,7 +83,7 @@ class CanInterface:
             shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
 
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
-            with shared_memory.bus_vector as bus:
+            with self.bus_vector as bus:
 
                 count = 1
                 while shared_memory.get_run_state() == RUN_STATE_RUNNING:
@@ -110,9 +117,12 @@ class CanInterface:
                             else:
                                 shared_memory.clutch_depressed = False
 
+                        elif msg.arbitration_id == 414:  # 414 (0x19E) contains brake pressure
+                            shared_memory.brake_pressure = int(msg.data[6])
+
                         count += 1
 
-            shared_memory.bus_vector.shutdown()
+            self.bus_vector.shutdown()
             my_logger.microsec_message(1, "CAN bus interface closed")
 
     def read_messages(self):
@@ -127,3 +137,16 @@ class CanInterface:
         shared_memory.set_run_state(RUN_STATE_BACKEND_STOPPED)
         my_logger.microsec_message(1, "Backend thread exiting")
         exit(0)
+        
+    def kick_backend(self):
+        if self.bus_vector:
+            my_logger.microsec_message(1, "Give the backend a kick to trigger thread exit")
+            # give the can interface a kick in case we don't have incoming messages
+            msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
+            try:
+                # this may not work if can interface is already shut
+                self.bus_vector.send(msg)
+            except:
+                my_logger.microsec_message(1, "Kicker not needed - backend thread has already exited")
+
+

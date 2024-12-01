@@ -5,7 +5,7 @@ import tkinter.font as font
 
 import shared_memory
 
-from yesican import yesican_shutdown
+from yesican import MainWindow
 from _version import __version__
 from my_logger import microsec_message
 from constants import *
@@ -19,13 +19,9 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
     return canvas.create_oval(x0, y0, x1, y1, outline=color, fill=color)
 
 
-def next_display() -> None:
-    shared_memory.flash_window = False
-    shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
-
-
 def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
+
 
 def format_outer_frame(outer_frame: tk.Frame):
     outer_frame.columnconfigure(0, weight=1)
@@ -77,8 +73,9 @@ class GuiBlank(tk.Frame):
 
 
 class GuiGearShift(tk.Frame):
-
+    main_window = None
     my_canvas = None
+    flash_display = False
 
     sv_rpm = None
     sv_gear = None
@@ -95,9 +92,10 @@ class GuiGearShift(tk.Frame):
     rpm_label = None
     next_button = None
 
-    def __init__(self, parent):
+    def __init__(self, this_window: MainWindow, parent: tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.main_window = this_window
 
         self.sv_rpm = tk.StringVar()
         self.sv_gear = tk.StringVar()
@@ -160,10 +158,10 @@ class GuiGearShift(tk.Frame):
             self.my_canvas.itemconfigure(light, fill=self.led_color(i, shared_memory.eng_rpm))
 
         # this code block handles flashing
-        shared_memory.flash_window = False  # default is to not flash the display
+        self.flash_display = False  # default is to not flash the display
         for trigger in reversed(shared_memory.settings.shift_triggers):
             if shared_memory.eng_rpm >= trigger['rpm']:
-                shared_memory.flash_window = trigger['flash']
+                self.flash_display = trigger['flash']
                 # now we've done that we don't want to look for further shift_triggers matches
                 break
 
@@ -190,7 +188,7 @@ class GuiGearShift(tk.Frame):
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
-            yesican_shutdown()
+            self.main_window.yesican_shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(self)
@@ -227,9 +225,12 @@ class GuiGearShift(tk.Frame):
         )
         clutch_label.grid(row=0, column=1, sticky='ew', padx=5, pady=5)
 
-        next_button = tk.Button(footer, text='Next', command=next_display)
+        next_button = tk.Button(footer, text='Next', command=self.main_window.next_window)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
+
+    def is_flashing(self) -> bool:
+        return self.flash_display
 
     def render_screen(self):
         format_outer_frame(self)
@@ -247,8 +248,9 @@ class GuiGearShift(tk.Frame):
 
 
 class GuiPitSpeed(tk.Frame):
-
+    main_window = None
     my_canvas = None
+    flash_display = False
 
     # this will be a StringVar that we will use as a textvariable in a Label object
     sv_speed = None
@@ -262,9 +264,10 @@ class GuiPitSpeed(tk.Frame):
     speed_blocks = None
     blk = []
 
-    def __init__(self, parent):
+    def __init__(self, this_window: MainWindow, parent: tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.main_window = this_window
 
         self.sv_speed = tk.StringVar()
 
@@ -322,10 +325,10 @@ class GuiPitSpeed(tk.Frame):
                 break
 
         # this code block handles flashing
-        shared_memory.flash_window = False  # default is to not flash the display
+        self.flash_display = False  # default is to not flash the display
         for trigger in reversed(shared_memory.settings.pit_triggers):
             if shared_memory.speed >= trigger['speed']:
-                shared_memory.flash_window = trigger['flash']
+                self.flash_display = trigger['flash']
                 # now we've done that we don't want to look for further shift_triggers matches
                 break
 
@@ -340,7 +343,7 @@ class GuiPitSpeed(tk.Frame):
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
-            yesican_shutdown()
+            self.main_window.yesican_shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(parent)
@@ -368,10 +371,13 @@ class GuiPitSpeed(tk.Frame):
         )
         pad_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
 
-        next_button = tk.Button(footer, text='Next', command=next_display)
+        next_button = tk.Button(footer, text='Next', command=self.main_window.next_window)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
 
+
+    def is_flashing(self) -> bool:
+        return self.flash_display
 
     def render_screen(self):
         format_outer_frame(self)
@@ -389,6 +395,8 @@ class GuiPitSpeed(tk.Frame):
 
 
 class GuiConfig(tk.Frame):
+    main_window = None
+    flash_display = False
 
     pit_speed = None  # StringVar
     speed_correction_factor = None  # StringVar
@@ -400,9 +408,10 @@ class GuiConfig(tk.Frame):
     speed_blocks = None
     blk = []
 
-    def __init__(self, parent):
+    def __init__(self, this_window: MainWindow, parent: tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.main_window = this_window
         self.pit_speed = tk.StringVar()
 
         self.font_title = font.Font(
@@ -427,12 +436,15 @@ class GuiConfig(tk.Frame):
 
     def next_display(self) -> None:
         self.update_config()
-        shared_memory.desired_mode = (shared_memory.desired_mode + 1) % shared_memory.no_of_modes
+        self.main_window.next_window()
+
+    def is_flashing(self) -> bool:
+        return self.flash_display
 
     def quit_yesican(self):
         self.update_config()
         shared_memory.set_run_state(RUN_STATE_PENDING_SHUTDOWN)
-        yesican_shutdown()
+        self.main_window.yesican_shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(parent)

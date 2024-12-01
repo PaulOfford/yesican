@@ -35,7 +35,7 @@ class BrakeTrail:
         self.line, = self.ax.plot([], [])
 
     def load_test_data(self):
-        file = open('test_data_tb.csv', 'r')
+        file = open('test_data.csv', 'r')
 
         if file:
             print('read file')
