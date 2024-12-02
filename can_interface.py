@@ -1,4 +1,5 @@
 import platform
+import os
 import can
 import time
 import pandas as pd
@@ -74,8 +75,14 @@ class CanInterface:
                     channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
                 )
             elif platform.system() == 'Linux':
-                self.bus_vector = can.interface.Bus(
-                    channel='can0', interface='socketcan', bitrate=100000
+                if shared_memory.settings.get_can_adapter() == "Waveshare":
+                    os.system('sudo ifconfig can0 down')
+                    os.system('sudo ip link set can0 type can bitrate 100000')
+                    os.system('sudo ifconfig can0 up')
+                    self.bus_vector = can.interface.Bus(channel='can0', bustyp='socketcan_ctypes')
+                else:
+                    self.bus_vector = can.interface.Bus(
+                        channel='can0', interface='socketcan', bitrate=100000
                 )
         except:
             my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")

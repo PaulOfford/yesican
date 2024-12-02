@@ -110,6 +110,9 @@ class Settings:
         else:
             return False
 
+    def get_can_adapter(self) -> str:
+        return self.config.get('config', 'can_adapter')
+
     def get_log_level(self) -> int:
         return int(self.config.get('logging', 'log_level'))
 
