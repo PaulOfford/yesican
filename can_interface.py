@@ -78,7 +78,7 @@ class CanInterface:
                 if shared_memory.settings.get_can_adapter() == "Waveshare":
                     os.system('sudo ip link set can0 down')
                     os.system('sudo ip link set can0 up type can bitrate 100000')
-                    self.bus_vector = can.interface.Bus(channel='can0', bustyp='socketcan_ctypes')
+                    self.bus_vector = can.interface.Bus(channel='can0', interface='socketcan')
                 else:
                     self.bus_vector = can.interface.Bus(
                         channel='can0', interface='socketcan', bitrate=100000
