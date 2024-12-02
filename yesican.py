@@ -11,16 +11,16 @@ from _version import __version__
 from my_logger import microsec_message
 from constants import *
 
-presentation = None
-
-
 class MainWindow:
+    presentation = None
     frame_list = []
-    index = 0
+    display_mode = 0
     visible = True
     flash = False
+    pit_speed_switch = False  # True - closed, False - open
 
-    def __init__(self, master):
+    def __init__(self, presentation, master):
+        self.presentation = presentation
         mainframe = tk.Frame(master)
         mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
@@ -32,102 +32,108 @@ class MainWindow:
         self.blank_display = GuiBlank(mainframe)
         self.blank_display.forget()
 
-    def change_window(self, display_mode):
-        self.frame_list[self.index].forget()
-        self.frame_list[display_mode].tkraise()
-        self.frame_list[display_mode].pack()
-        self.index = display_mode
+    def shutdown(self) -> None:
+        self.presentation.shutdown()
+
+    def get_window_height(self) -> int:
+        return self.presentation.get_window_height()
+
+    def get_display_mode(self) -> int:
+        return self.display_mode
+
+    def change_window(self, desired_display_mode: int) -> None:
+        self.frame_list[self.display_mode].forget()
+        self.frame_list[desired_display_mode].tkraise()
+        self.frame_list[desired_display_mode].pack()
+        self.display_mode = desired_display_mode
         self.flash = False
         self.visible = True
 
-        shared_memory.current_mode = shared_memory.desired_mode
-
     def next_window(self):
-        next_mode = (self.index + 1) % len(self.frame_list)
+        next_mode = (self.display_mode + 1) % len(self.frame_list)
         microsec_message(2, "Next button to mode " + str(next_mode))
         self.change_window(next_mode)
 
     def flash_window(self) -> None:
-        if self.visible and self.frame_list[shared_memory.current_mode].is_flashing():
-            self.frame_list[self.index].forget()
+        if self.visible and self.frame_list[self.display_mode].is_flashing():
+            self.frame_list[self.display_mode].forget()
             self.blank_display.tkraise()  # assumes blank is last frame in the frame_list
             self.visible = False
             self.blank_display.pack()
         else:
             self.blank_display.forget()  # assumes blank is last frame in the frame_list
-            self.frame_list[self.index].tkraise()
+            self.frame_list[self.display_mode].tkraise()
             self.visible = True
-            self.frame_list[self.index].pack()
+            self.frame_list[self.display_mode].pack()
 
     def check_switch(self, master):
         # check the physical pit speed limiter switch
         if switcher.is_switch_on():
-            if not shared_memory.pit_speed_switch:
+            if not self.pit_speed_switch:
                 microsec_message(1, "Switch to Pit Speed display")
-                shared_memory.desired_mode = 1
-                self.change_window(shared_memory.desired_mode)
-                shared_memory.pit_speed_switch = True
+                self.change_window(desired_display_mode=1)
+                self.pit_speed_switch = True
         else:
-            if shared_memory.pit_speed_switch:
+            if self.pit_speed_switch:
                 microsec_message(1, "Switch to Gear Shift display")
-                shared_memory.desired_mode = 0
-                self.change_window(shared_memory.desired_mode)
-                shared_memory.pit_speed_switch = False
-
-        if shared_memory.current_mode != shared_memory.desired_mode:
-            self.next_window()
+                self.change_window(desired_display_mode=0)
+                self.pit_speed_switch = False
 
         # this doesn't have to run at a high frequency as it only processes button and switch events
         master.after(250, lambda: self.check_switch(master))
-
-    @staticmethod
-    def yesican_shutdown():
-        microsec_message(1, "Shutdown requested")
-        shared_memory.run_state = RUN_STATE_AWAITING_BACKEND
-        time.sleep(0.2)
-    
-        presentation.kick_backend()
-    
-        microsec_message(1, "Shutdown checking that the backend thread has exited")
-        shared_memory.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
-    
-        shared_memory.root.destroy()
-        microsec_message(1, "Shutdown done - exiting")
-        shared_memory.run_state = RUN_STATE_EXITING
-        exit(0)
 
 
 class Presentation:
 
     canbus = None
+    backend_thread = None
+    root = None
 
     def __init__(self):
+        shared_memory.set_run_state(RUN_STATE_RUNNING)
         shared_memory.settings = Settings()
         shared_memory.settings.read_config()
 
         # start backend thread
         self.canbus = CanInterface()
-        shared_memory.backend_thread = threading.Thread(target=self.canbus.read_messages)
-        shared_memory.backend_thread.start()
+        self.backend_thread = threading.Thread(target=self.canbus.read_messages)
+        self.backend_thread.start()
 
-    @staticmethod
-    def run_presentation():
+    def get_window_height(self) -> int:
+        return self.root.winfo_height()
+
+    def shutdown(self):
+        microsec_message(1, "Shutdown requested")
+        shared_memory.run_state = RUN_STATE_AWAITING_BACKEND
+        time.sleep(0.2)
+
+        self.kick_backend()
+
+        microsec_message(1, "Shutdown checking that the backend thread has exited")
+        self.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
+
+        self.root.destroy()
+        microsec_message(1, "Shutdown done - exiting")
+        shared_memory.run_state = RUN_STATE_EXITING
+        exit(0)
+
+    def run_presentation(self):
         microsec_message(1, "Presentation started")
-        shared_memory.root = tk.Tk()
-        shared_memory.root.config(cursor='none')
+        self.root = tk.Tk()
+        self.root.config(cursor='none')
 
         if shared_memory.settings.get_fullscreen_state():
-            shared_memory.root.wm_attributes('-fullscreen', 'True')
-        shared_memory.root.geometry(
+            self.root.wm_attributes('-fullscreen', 'True')
+        self.root.geometry(
             str(shared_memory.settings.get_screen_width()) + "x" + str(shared_memory.settings.get_screen_height())
         )
-        shared_memory.root.configure(bg=shared_memory.settings.get_bg_color())
-        shared_memory.root.update()  # we have to do this so that later code can get the window size
+        self.root.configure(bg=shared_memory.settings.get_bg_color())
+        self.root.update()  # we have to do this so that later code can get the window size
 
-        window = MainWindow(shared_memory.root)
-        shared_memory.root.protocol("WM_DELETE_WINDOW", window.yesican_shutdown)
-        shared_memory.root.after(100, lambda: window.check_switch(shared_memory.root))
-        shared_memory.root.mainloop()
+        window = MainWindow(self, self.root)
+        self.root.protocol("WM_DELETE_WINDOW", window.shutdown)
+        self.root.after(100, lambda: window.check_switch(self.root))
+        self.root.mainloop()
 
     def kick_backend(self):
         self.canbus.kick_backend()

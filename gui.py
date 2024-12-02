@@ -23,11 +23,11 @@ def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
 
 
-def format_outer_frame(outer_frame: tk.Frame):
+def format_outer_frame(outer_frame: tk.Frame, window_height: int):
     outer_frame.columnconfigure(0, weight=1)
-    outer_frame.rowconfigure(0, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 10% for header
-    outer_frame.rowconfigure(1, weight=1, minsize=shared_memory.root.winfo_height() * 0.70)  # 65% for body
-    outer_frame.rowconfigure(2, weight=1, minsize=shared_memory.root.winfo_height() * 0.15)  # 20% for footer
+    outer_frame.rowconfigure(0, weight=1, minsize=window_height * 0.15)  # 15% for header
+    outer_frame.rowconfigure(1, weight=1, minsize=window_height * 0.70)  # 70% for body
+    outer_frame.rowconfigure(2, weight=1, minsize=window_height * 0.15)  # 15% for footer
 
 
 def build_header(parent: tk.Frame) -> tk.Frame:
@@ -174,7 +174,7 @@ class GuiGearShift(tk.Frame):
         self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
 
     def process_updates(self):
-        if shared_memory.current_mode == 0:
+        if self.main_window.get_display_mode() == DM_GEAR_SHIFT_INDICATOR:
             microsec_message(4, "Gear shift display update start")
             self.update_shift_lights()
             self.update_gear_gauge()
@@ -188,7 +188,7 @@ class GuiGearShift(tk.Frame):
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
-            self.main_window.yesican_shutdown()
+            self.main_window.shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(self)
@@ -233,7 +233,7 @@ class GuiGearShift(tk.Frame):
         return self.flash_display
 
     def render_screen(self):
-        format_outer_frame(self)
+        format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_shift_screen_title())
         body = self.get_content_frame(self)
@@ -334,7 +334,7 @@ class GuiPitSpeed(tk.Frame):
 
     def process_updates(self):
         # we only want to mess with the display if it is top of the stack
-        if shared_memory.current_mode == 1:
+        if self.main_window.get_display_mode() == DM_PIT_SPEED_INDICATOR:
             microsec_message(4, "Pit speed display update start")
             # self.sim_speed()
             self.update_speed_blocks()
@@ -343,7 +343,7 @@ class GuiPitSpeed(tk.Frame):
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(50, self.process_updates)
         else:
-            self.main_window.yesican_shutdown()
+            self.main_window.shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(parent)
@@ -380,7 +380,7 @@ class GuiPitSpeed(tk.Frame):
         return self.flash_display
 
     def render_screen(self):
-        format_outer_frame(self)
+        format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_pit_screen_title())
         body = self.get_content_frame(self)
@@ -444,7 +444,7 @@ class GuiConfig(tk.Frame):
     def quit_yesican(self):
         self.update_config()
         shared_memory.set_run_state(RUN_STATE_PENDING_SHUTDOWN)
-        self.main_window.yesican_shutdown()
+        self.main_window.shutdown()
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(parent)
@@ -506,7 +506,7 @@ class GuiConfig(tk.Frame):
         return footer
 
     def render_screen(self):
-        format_outer_frame(self)
+        format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_conf_screen_title())
         body = self.get_content_frame(self)
