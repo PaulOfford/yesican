@@ -16,7 +16,6 @@ class MainWindow:
     frame_list = []
     display_mode = 0
     visible = True
-    flash = False
     pit_speed_switch = False  # True - closed, False - open
 
     def __init__(self, presentation, master):
@@ -25,6 +24,7 @@ class MainWindow:
         mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
 
+        # any change to the following list must be matched with changes to the DM_ ... values on constants.py
         self.frame_list = [GuiGearShift(self, mainframe), GuiPitSpeed(self, mainframe), GuiConfig(self, mainframe)]
 
         for i in range(1, len(self.frame_list)):
@@ -54,17 +54,23 @@ class MainWindow:
         microsec_message(2, "Next button to mode " + str(next_mode))
         self.change_window(next_mode)
 
+    def reveal_window(self, current_mode: int) -> None:
+        self.blank_display.forget()  # assumes blank is last frame in the frame_list
+        self.frame_list[current_mode].tkraise()
+        self.visible = True
+        self.frame_list[current_mode].pack()
+
+    def blank_window(self, current_mode: int) -> None:
+        self.frame_list[current_mode].forget()
+        self.blank_display.tkraise()  # assumes blank is last frame in the frame_list
+        self.visible = False
+        self.blank_display.pack()
+
     def flash_window(self) -> None:
-        if self.visible and self.frame_list[self.display_mode].is_flashing():
-            self.frame_list[self.display_mode].forget()
-            self.blank_display.tkraise()  # assumes blank is last frame in the frame_list
-            self.visible = False
-            self.blank_display.pack()
+        if self.visible:
+            self.blank_window(self.display_mode)
         else:
-            self.blank_display.forget()  # assumes blank is last frame in the frame_list
-            self.frame_list[self.display_mode].tkraise()
-            self.visible = True
-            self.frame_list[self.display_mode].pack()
+            self.reveal_window(self.display_mode)
 
     def check_switch(self, master):
         # check the physical pit speed limiter switch
@@ -78,6 +84,12 @@ class MainWindow:
                 microsec_message(1, "Switch to Gear Shift display")
                 self.change_window(desired_display_mode=0)
                 self.pit_speed_switch = False
+
+        # the display will flash at the rate set in the following master.after statement
+        if self.frame_list[self.display_mode].is_flashing():
+            self.flash_window()
+        elif not self.visible:
+            self.reveal_window(self.display_mode)
 
         # this doesn't have to run at a high frequency as it only processes button and switch events
         master.after(250, lambda: self.check_switch(master))
