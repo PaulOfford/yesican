@@ -76,9 +76,8 @@ class CanInterface:
                 )
             elif platform.system() == 'Linux':
                 if shared_memory.settings.get_can_adapter() == "Waveshare":
-                    os.system('sudo ifconfig can0 down')
-                    os.system('sudo ip link set can0 type can bitrate 100000')
-                    os.system('sudo ifconfig can0 up')
+                    os.system('sudo ip link set can0 down')
+                    os.system('sudo ip link set can0 up type can bitrate 100000')
                     self.bus_vector = can.interface.Bus(channel='can0', bustyp='socketcan_ctypes')
                 else:
                     self.bus_vector = can.interface.Bus(
