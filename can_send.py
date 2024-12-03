@@ -33,13 +33,11 @@ class CanInterface:
             microsec_message(1, "Attempt to open the CAN interface failed")
 
     def send_messages(self, msg):
-        with self.can1 as bus:
-            try:
-                # this may not work if can interface is already shut
-                bus.send(msg)
-                microsec_message(5, str(msg))
-            except:
-                microsec_message(1, "Message send failed")
+        try:
+            self.can1.send(msg)
+            microsec_message(5, str(msg))
+        except:
+            microsec_message(1, "Message send failed")
 
 if __name__ == "__main__":
     canbus = CanInterface()
