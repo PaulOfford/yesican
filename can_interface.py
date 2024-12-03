@@ -80,6 +80,7 @@ class CanInterface:
                     os.system('sudo ip link set can0 up type can bitrate 100000')
                     self.bus_vector = can.interface.Bus(channel='can0', interface='socketcan')
                 else:
+                    # ToDo: Merge with above code and eliminate the need for get_can_adapter
                     self.bus_vector = can.interface.Bus(
                         channel='can0', interface='socketcan', bitrate=100000
                 )
