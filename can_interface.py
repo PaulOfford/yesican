@@ -129,6 +129,9 @@ class CanInterface:
                         elif msg.arbitration_id == 414:  # 414 (0x19E) contains brake pressure
                             shared_memory.brake_pressure = int(msg.data[6])
 
+                        elif msg.arbitration_id == 170:  # 170 (0x0aa) contains pedal position
+                            shared_memory.pedal_position = 100 * int(msg.data[3]) / 254
+
                         count += 1
 
             self.bus_vector.shutdown()

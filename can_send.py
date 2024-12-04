@@ -101,6 +101,19 @@ if __name__ == "__main__":
         )
         canbus.send_messages(msg)
 
+        # msg.arbitration_id == 170 - Brake pressure
+        # byte 3
+        pedal_position = int(row['Pedal Position (%)'])
+        # there's a bug in the Aim device - it assumes max value is 256 (?) when it's actually 254
+        byte3 = int(256 * pedal_position / 100)
+
+        msg = can.Message(
+            arbitration_id=0x0aa,
+            data=[0xf8, 0xa0, 0x0a, byte3, 0x00, 0x00, 0xa4, 0x00],
+            is_extended_id=False
+        )
+        canbus.send_messages(msg)
+
         microsec_message(5, "Test message processed")
 
     microsec_message(1, "End of test data feed")
