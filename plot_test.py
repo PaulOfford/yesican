@@ -55,7 +55,7 @@ class BrakeTrail:
 
     def animate(self, i):
         # print('i:', i, x[i:i + 10], y[i:i + 10])
-        sleep(0.01)
+        # sleep(0.01)
 
         current_x = self.x[i:i + 128]
         current_y = self.y[i:i + 128]
@@ -76,12 +76,13 @@ class BrakeTrail:
 
     def run_plot(self):
         # - GUI -
+        self.ani = animation.FuncAnimation(self.fig, self.animate, 512, interval=50, blit=False)
 
-        try:
-            self.ani = animation.FuncAnimation(self.fig, self.animate, 512, interval=0, blit=False)
-
-        except NameError as ex:
-            print(ex)
+        # try:
+        #     self.ani = animation.FuncAnimation(self.fig, self.animate, 512, interval=0, blit=False)
+        #
+        # except NameError as ex:
+        #     print(ex)
 
 if __name__ == "__main__":
     bt_plot = BrakeTrail()

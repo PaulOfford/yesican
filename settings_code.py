@@ -7,10 +7,10 @@ import configparser
 class Settings:
     config = configparser.ConfigParser()
 
-    led_off_color = 'white'
-    default_gear_color = 'white'
-    default_speed_color = 'white'
-    default_blk_color = 'gray20'
+    led_off_color = '#ffffff'
+    default_gear_color = '#ffffff'
+    default_speed_color = '#ffffff'
+    default_blk_color = '#333333'
 
     led_radius = 16
     led_good = "lawn green"
@@ -155,6 +155,9 @@ class Settings:
     def get_bg_color(self) -> str:
         return self.config.get('general', 'bg_color').replace("'", "")
 
+    def get_default_font_color(self) -> str:
+        return self.config.get('general', 'default_font_color').replace("'", "")
+
     def get_base_font_size(self) -> int:
         return int(self.config.get('general', 'base_font_size'))
 
@@ -175,6 +178,12 @@ class Settings:
 
     def get_pit_screen_title(self) -> str:
         return self.config.get('pit', 'pit_screen_title').replace('"', '')
+
+    def get_brake_trace_title(self) -> str:
+        return self.config.get('brakes', 'brake_trace_title').replace('"', '')
+
+    def get_plot_count(self) -> int:
+        return int(self.config.get('brakes', 'plot_count'))
 
     def get_conf_screen_title(self) -> str:
         return self.config.get('config', 'config_screen_title').replace('"', '')

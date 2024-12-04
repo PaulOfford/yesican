@@ -25,7 +25,10 @@ class MainWindow:
         mainframe.pack()
 
         # any change to the following list must be matched with changes to the DM_ ... values on constants.py
-        self.frame_list = [GuiGearShift(self, mainframe), GuiPitSpeed(self, mainframe), GuiConfig(self, mainframe)]
+        self.frame_list = [
+            GuiGearShift(self, mainframe), GuiPitSpeed(self, mainframe),
+            GuiBrakeTrace(self, mainframe), GuiConfig(self, mainframe)
+        ]
 
         for i in range(1, len(self.frame_list)):
             self.frame_list[i].forget()

@@ -2,8 +2,13 @@ import tkinter
 from typing import Union
 import tkinter as tk
 import tkinter.font as font
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 import shared_memory
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from time import sleep
 
 from yesican import MainWindow
 from _version import __version__
@@ -56,7 +61,8 @@ def get_header_frame(parent: tk.Frame, page_title: str) -> tk.Frame:
     header = build_header(parent)
     screen_title = tk.Label(
         header, text=page_title, width=shared_memory.settings.get_screen_width(),
-        pady=12, fg='white', bg=shared_memory.settings.get_bg_color(), font=font_title
+        pady=12, fg=shared_memory.settings.get_default_font_color(),
+        bg=shared_memory.settings.get_bg_color(), font=font_title
     )
     screen_title.grid(row=0, column=0, sticky='ew')
     return header
@@ -367,14 +373,14 @@ class GuiPitSpeed(tk.Frame):
         footer = build_footer(parent)
 
         pad_label = tk.Label(
-            footer, text=' ', fg='white', bg=shared_memory.settings.get_bg_color(), font=self.font_title
+            footer, text=' ', fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_title
         )
         pad_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
 
         next_button = tk.Button(footer, text='Next', command=self.main_window.next_window)
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
-
 
     def is_flashing(self) -> bool:
         return self.flash_display
@@ -392,6 +398,120 @@ class GuiPitSpeed(tk.Frame):
 
         # pack this frame with the content above
         self.pack()
+
+
+class GuiBrakeTrace(tk.Frame):
+    main_window = None
+    my_canvas = None
+
+    # default values at start
+    x = [i for i in range(0, shared_memory.settings.get_plot_count())]
+    y = [0] * shared_memory.settings.get_plot_count()
+
+    fig = None
+    ax = None  # axes object for the plot
+    line = None  # plot line
+
+    font_title = None
+
+
+    def __init__(self, this_window: MainWindow, parent: tk.Frame):
+        super().__init__(parent)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.main_window = this_window
+
+        self.sv_speed = tk.StringVar()
+
+        self.font_title = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size() / 4), weight='normal'
+        )
+        self.font_gear = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
+        )
+
+        self.render_screen()
+
+    def is_flashing(self) -> bool:
+        return False
+
+    def build_plot(self, container):
+        self.fig = plt.Figure()
+        self.fig.patch.set_facecolor(shared_memory.settings.get_bg_color())
+
+        canvas = FigureCanvasTkAgg(self.fig, master=container)
+        canvas.get_tk_widget().pack()
+
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_xticks([])
+        self.ax.yaxis.tick_right()
+        self.ax.tick_params(axis='y', colors=shared_memory.settings.get_default_font_color())
+        self.ax.set_ylim(ymax=140)
+        self.line, = self.ax.plot([], [])
+
+    def animate(self, i) -> None:
+        # need to check for shutdown
+        if shared_memory.get_run_state() != RUN_STATE_RUNNING:
+            self.main_window.shutdown()
+            return
+
+        # we only want to mess with the display if it is top of the stack
+        if self.main_window.get_display_mode() == DM_BRAKE_TRACE_PLOT:
+
+            microsec_message(4, "Brake Trace plot update start")
+            self.y.pop(0)
+            self.y.append(shared_memory.brake_pressure)  # brake pressure
+
+            current_x = self.x[0:128]
+            current_y = self.y[0:128]
+
+            self.line.set_xdata(current_x)
+            self.line.set_ydata(current_y)
+            self.line.set_color('r')
+
+            if current_x:
+                self.ax.set_xlim(min(current_x), max(current_x))
+
+            # canvas.draw()
+            microsec_message(4, "Brake Trace plot update end")
+
+        return
+
+    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
+        content = tk.Frame(parent)
+        content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.build_plot(content)
+        return content
+
+    def get_footer_frame(self, parent: tk.Frame) -> tk.Frame:
+        footer = build_footer(parent)
+
+        pad_label = tk.Label(
+            footer, text=' ', fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_title
+        )
+        pad_label.grid(row=0, column=0, sticky='sw', padx=5, pady=5)
+
+        next_button = tk.Button(footer, text='Next', command=self.main_window.next_window)
+        next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
+        return footer
+
+    def render_screen(self):
+        format_outer_frame(self, self.main_window.get_window_height())
+
+        header = get_header_frame(self, shared_memory.settings.get_brake_trace_title())
+        body = self.get_content_frame(self)
+        footer = self.get_footer_frame(self)
+
+        header.grid(row=0, column=0, sticky='ew')
+        body.grid(row=1, column=0, sticky='ew')
+        footer.grid(row=2, column=0, sticky='ew')
+
+        # pack this frame with the content above
+        self.pack()
+
+        self.ani = animation.FuncAnimation(
+            self.fig, self.animate, shared_memory.settings.get_plot_count(), interval=50, blit=False
+        )
 
 
 class GuiConfig(tk.Frame):
@@ -458,19 +578,22 @@ class GuiConfig(tk.Frame):
 
         speed_limit = tk.Label(
             content, text="Pit Lane Speed Limit (kph):",
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         speed_box = tk.Entry(content, textvariable=self.pit_speed)
 
         correction_factor_label = tk.Label(
             content, text="Speed Correction Factor:",
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         correction_factor = tk.Entry(content, textvariable=self.speed_correction_factor)
 
         fullscreen = tk.Label(
             content, text="Fullscreen Mode:",
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         fullscreen_check_box = tk.Checkbutton(
             content, variable=self.fs_status, bg=shared_memory.settings.get_bg_color(),
@@ -495,7 +618,8 @@ class GuiConfig(tk.Frame):
         quit_button = tk.Button(footer, text='Quit', command=self.quit_yesican)
         version = tk.Label(
             footer, text="v " + __version__,
-            fg='white', bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         next_button = tk.Button(footer, text='Next', command=self.next_display)
 
