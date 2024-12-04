@@ -406,11 +406,14 @@ class GuiBrakeTrace(tk.Frame):
 
     # default values at start
     x = [i for i in range(0, shared_memory.settings.get_plot_count())]
-    y = [0] * shared_memory.settings.get_plot_count()
+    y_brake = [0] * shared_memory.settings.get_plot_count()
+    y_pedal = [0] * shared_memory.settings.get_plot_count()
 
     fig = None
     ax = None  # axes object for the plot
-    line = None  # plot line
+    brake_line = None  # plot line
+    pedal_line = None
+    ani = None
 
     font_title = None
 
@@ -446,9 +449,16 @@ class GuiBrakeTrace(tk.Frame):
         self.ax.yaxis.tick_right()
         self.ax.tick_params(axis='y', colors=shared_memory.settings.get_default_font_color())
         self.ax.set_ylim(ymax=140)
-        self.line, = self.ax.plot([], [])
 
-    def animate(self, i) -> None:
+        # add the brake pressure plot
+        self.brake_line, = self.ax.plot([], [])
+        self.brake_line.set_color('#ff0000')
+
+        # add the pedal position plot
+        self.pedal_line, = self.ax.plot([], [])
+        self.pedal_line.set_color('#00bb00')
+
+    def animate(self, i):
         # need to check for shutdown
         if shared_memory.get_run_state() != RUN_STATE_RUNNING:
             self.main_window.shutdown()
@@ -458,23 +468,35 @@ class GuiBrakeTrace(tk.Frame):
         if self.main_window.get_display_mode() == DM_BRAKE_TRACE_PLOT:
 
             microsec_message(4, "Brake Trace plot update start")
-            self.y.pop(0)
-            self.y.append(shared_memory.brake_pressure)  # brake pressure
 
-            current_x = self.x[0:128]
-            current_y = self.y[0:128]
+            # update brake pressure
+            # the brake pressure multiplier is used to stretch the scale of the plot on the y-axis
+            self.y_brake.pop(0)
+            self.y_brake.append(shared_memory.brake_pressure * shared_memory.settings.get_pressure_multiplier())
 
-            self.line.set_xdata(current_x)
-            self.line.set_ydata(current_y)
-            self.line.set_color('r')
+            # update pedal position
+            self.y_pedal.pop(0)
+            self.y_pedal.append(shared_memory.pedal_position)  # brake pressure
 
-            if current_x:
-                self.ax.set_xlim(min(current_x), max(current_x))
+            x = self.x[0:128]
+            brake_y = self.y_brake[0:128]
+            pedal_y = self.y_pedal[0:128]
+
+            # add the brake pressure line to the graph
+            self.brake_line.set_xdata(x)
+            self.brake_line.set_ydata(brake_y)
+
+            # add the pedal position line to the graph
+            self.pedal_line.set_xdata(x)
+            self.pedal_line.set_ydata(pedal_y)
+
+            # set the range of the x-axis
+            self.ax.set_xlim(min(x), max(x))
 
             # canvas.draw()
             microsec_message(4, "Brake Trace plot update end")
 
-        return
+        return self.pedal_line,
 
     def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
         content = tk.Frame(parent)

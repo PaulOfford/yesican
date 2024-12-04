@@ -185,6 +185,9 @@ class Settings:
     def get_plot_count(self) -> int:
         return int(self.config.get('brakes', 'plot_count'))
 
+    def get_pressure_multiplier(self) -> int:
+        return float(self.config.get('brakes', 'pressure_multiplier'))
+
     def get_conf_screen_title(self) -> str:
         return self.config.get('config', 'config_screen_title').replace('"', '')
 

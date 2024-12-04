@@ -9,6 +9,7 @@ pre_calc_gear = 0
 speed = 0
 clutch_depressed = False
 brake_pressure = 0
+pedal_position = 0
 
 
 def get_run_state() -> int:

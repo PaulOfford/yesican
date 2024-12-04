@@ -61,6 +61,8 @@ class CanInterface:
 
                 shared_memory.brake_pressure = int(row['BRAKE PRESS (bar)'])
 
+                shared_memory.pedal_position = int(row['Pedal Position (%)'])
+
                 my_logger.microsec_message(5, "Test message processed")
 
             else:

@@ -1,8 +1,6 @@
 import tkinter as tk
-from time import sleep
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -14,13 +12,15 @@ import csv
 
 class BrakeTrail:
     # default values at start
-    x = []
-    y = []
+    x_axis = []
+    y_brake = []
+    y_pedal = []
 
     fig = None
-    ax = None  # axes object for the plot
-    line = None  # plot line
-
+    ax = None
+    brake_line = None  # plot line
+    pedal_line = None  # plot line
+    ani = None
 
     def build_plot(self, container):
         self.fig = plt.Figure()
@@ -29,10 +29,17 @@ class BrakeTrail:
         canvas.get_tk_widget().pack()
 
         self.ax = self.fig.add_subplot(111)
-        # ax.set_xticks([])
+        self.ax.set_xticks([])
         self.ax.yaxis.tick_right()
-        self.ax.set_ylim(ymax=140)
-        self.line, = self.ax.plot([], [])
+        self.ax.set_ylim(0, 120)
+
+        # add the brake pressure plot
+        self.brake_line, = self.ax.plot([], [])
+        self.brake_line.set_color('#ff0000')
+
+        # add the pedal position plot
+        self.pedal_line, = self.ax.plot([], [])
+        self.pedal_line.set_color('#00bb00')
 
     def load_test_data(self):
         file = open('test_data.csv', 'r')
@@ -44,45 +51,29 @@ class BrakeTrail:
             for row in reader_csv:
                 if row[0] == 'Time (s)':
                     continue
-                self.x.append(float(row[0]))  # time offset
-                # y.append(float(row[1]))
-                self.y.append(float(row[16]))  # brake pressure
-
-            if self.x:
-                self.ax.set_xlim(0, 10)
-            if self.y:
-                self.ax.set_ylim(min(self.y), max(self.y))
+                self.x_axis.append(float(row[0]))  # time offset
+                self.y_brake.append(float(row[16]))  # brake pressure
+                self.y_pedal.append(float(row[17]))  # pedal position
 
     def animate(self, i):
-        # print('i:', i, x[i:i + 10], y[i:i + 10])
-        # sleep(0.01)
+        x = self.x_axis[i:i + 128]
+        brake_y = self.y_brake[i:i + 128]
+        pedal_y = self.y_pedal[i:i + 128]
 
-        current_x = self.x[i:i + 128]
-        current_y = self.y[i:i + 128]
+        self.brake_line.set_xdata(x)
+        self.brake_line.set_ydata(brake_y)
 
-        self.line.set_xdata(current_x)
-        self.line.set_ydata(current_y)
-        self.line.set_color('r')
+        self.pedal_line.set_xdata(x)
+        self.pedal_line.set_ydata(pedal_y)
 
-        if current_x:
-            self.ax.set_xlim(min(current_x), max(current_x))
+        if x:
+            self.ax.set_xlim(min(x), max(x))
 
-        # canvas.draw()
-
-        return self.line,
-
-
-    # --- main ---
+        return self.pedal_line,
 
     def run_plot(self):
-        # - GUI -
+        # animate with a frame rate of 20 fps (or every 50 ms) to match data rate
         self.ani = animation.FuncAnimation(self.fig, self.animate, 512, interval=50, blit=False)
-
-        # try:
-        #     self.ani = animation.FuncAnimation(self.fig, self.animate, 512, interval=0, blit=False)
-        #
-        # except NameError as ex:
-        #     print(ex)
 
 if __name__ == "__main__":
     bt_plot = BrakeTrail()
