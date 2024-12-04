@@ -73,15 +73,22 @@ if __name__ == "__main__":
         )
         canbus.send_messages(msg)
 
+        # msg.arbitration_id == 170 - Pedal Position
+        # byte 3
+        pedal_position = float(row['Pedal Position (%)'])
+        # there's a bug in the Aim device - it assumes max value is 256 (?) when it's actually 254
+        byte3 = int(256 * pedal_position / 100)
+
         # msg.arbitration_id == 170 - RPM
         # multiply by 4
         # and then place in data byte 4 & 5, little endian
         eng_rpm = int(row['RPM']) * 4
         byte5 = int(eng_rpm/256)
         byte4 = eng_rpm - (byte5 * 256)
+
         msg = can.Message(
             arbitration_id=0x0aa,
-            data=[0x67, 0x32, 0xa0, 0x00, byte4, byte5, 0x00, 0x00],
+            data=[0x67, 0x32, 0xa0, byte3, byte4, byte5, 0x00, 0x00],
             is_extended_id=False
         )
         canbus.send_messages(msg)
@@ -97,19 +104,6 @@ if __name__ == "__main__":
         msg = can.Message(
             arbitration_id=0x19e,
             data=[0x00, 0xec, 0x3f, 0xfc, 0xfe, 0x41, byte6, 0x19],
-            is_extended_id=False
-        )
-        canbus.send_messages(msg)
-
-        # msg.arbitration_id == 170 - Brake pressure
-        # byte 3
-        pedal_position = int(row['Pedal Position (%)'])
-        # there's a bug in the Aim device - it assumes max value is 256 (?) when it's actually 254
-        byte3 = int(256 * pedal_position / 100)
-
-        msg = can.Message(
-            arbitration_id=0x0aa,
-            data=[0xf8, 0xa0, 0x0a, byte3, 0x00, 0x00, 0xa4, 0x00],
             is_extended_id=False
         )
         canbus.send_messages(msg)
