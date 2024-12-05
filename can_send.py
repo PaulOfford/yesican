@@ -33,18 +33,20 @@ class CanInterface:
             microsec_message(1, "Attempt to open the CAN interface failed")
 
     def send_messages(self, msg):
-        try:
-            self.can1.send(msg)
-            microsec_message(5, str(msg))
-        except:
-            microsec_message(1, "Message send failed")
+        self.can1.send(msg)
+        microsec_message(5, str(msg))
+
 
 if __name__ == "__main__":
     canbus = CanInterface()
     canbus.open_interface()
+    microsec_message(1, "CAN bus interface open")
 
     test_data_frame = pd.read_csv('test_data.csv')
+    microsec_message(1, "Test data loaded")
+
     last_time_offset = 0
+    microsec_message(1, "Send starting")
 
     for i, row in test_data_frame.iterrows():
         # calculate the delay needed
@@ -108,6 +110,11 @@ if __name__ == "__main__":
         )
         canbus.send_messages(msg)
 
+        if i % 10 == 0:
+            microsec_message(1, "Test records processed: " + str(i))
+
         microsec_message(5, "Test message processed")
 
     microsec_message(1, "End of test data feed")
+    microsec_message(1, "Test records processed: " + str(i))
+
