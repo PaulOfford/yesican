@@ -21,14 +21,9 @@ class CanInterface:
                     channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
                 )
             elif platform.system() == 'Linux':
-                if settings.get_can_adapter() == "Waveshare":
-                    os.system('sudo ip link set can1 down')
-                    os.system('sudo ip link set can1 up type can bitrate 100000')
-                    self.can1 = can.interface.Bus(channel='can1', interface='socketcan')
-                else:
-                    self.can1 = can.interface.Bus(
-                        channel='can1', interface='socketcan', bitrate=100000
-                    )
+                os.system('sudo ip link set can1 down')
+                os.system('sudo ip link set can1 up type can bitrate 100000')
+                self.can1 = can.interface.Bus(channel='can1', interface='socketcan')
         except:
             microsec_message(1, "Attempt to open the CAN interface failed")
 

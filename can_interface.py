@@ -77,15 +77,9 @@ class CanInterface:
                     channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
                 )
             elif platform.system() == 'Linux':
-                if shared_memory.settings.get_can_adapter() == "Waveshare":
-                    os.system('sudo ip link set can0 down')
-                    os.system('sudo ip link set can0 up type can bitrate 100000')
-                    self.bus_vector = can.interface.Bus(channel='can0', interface='socketcan')
-                else:
-                    # ToDo: Merge with above code and eliminate the need for get_can_adapter
-                    self.bus_vector = can.interface.Bus(
-                        channel='can0', interface='socketcan', bitrate=100000
-                )
+                os.system('sudo ip link set can0 down')
+                os.system('sudo ip link set can0 up type can bitrate 100000')
+                self.bus_vector = can.interface.Bus(channel='can0', interface='socketcan')
         except:
             my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
             my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
