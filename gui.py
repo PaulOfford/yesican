@@ -8,7 +8,6 @@ import matplotlib.animation as animation
 import shared_memory
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from time import sleep
 
 from yesican import MainWindow
 from _version import __version__
@@ -82,6 +81,7 @@ class GuiGearShift(tk.Frame):
     main_window = None
     my_canvas = None
     flash_display = False
+    visible = True
 
     sv_rpm = None
     sv_gear = None
@@ -160,10 +160,7 @@ class GuiGearShift(tk.Frame):
         self.sv_rpm.set(str(round_to_fifty(shared_memory.eng_rpm)))
 
     def update_shift_lights(self):
-        for i, light in enumerate(self.led):
-            self.my_canvas.itemconfigure(light, fill=self.led_color(i, shared_memory.eng_rpm))
-
-        # this code block handles flashing
+        # this code block determines if the shift lights should flash
         self.flash_display = False  # default is to not flash the display
         for trigger in reversed(shared_memory.settings.shift_triggers):
             if shared_memory.eng_rpm >= trigger['rpm']:
@@ -171,13 +168,23 @@ class GuiGearShift(tk.Frame):
                 # now we've done that we don't want to look for further shift_triggers matches
                 break
 
+        for i, light in enumerate(self.led):
+            self.my_canvas.itemconfigure(light, fill=self.led_color(i, shared_memory.eng_rpm))
+
     def update_gear_gauge(self):
         if shared_memory.pre_calc_gear == 0:
             displayed_gear = 'N'
         else:
             displayed_gear = str(shared_memory.pre_calc_gear)
         self.sv_gear.set(displayed_gear)
-        self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
+
+        if self.flash_display:
+            if self.visible:
+                self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
+            else:
+                self.gear_value.configure(fg=shared_memory.settings.get_bg_color())
+        else:
+            self.gear_value.configure(fg=self.gear_color(rpm=shared_memory.eng_rpm))
 
     def process_updates(self):
         if self.main_window.get_display_mode() == DM_GEAR_SHIFT_INDICATOR:
@@ -196,7 +203,7 @@ class GuiGearShift(tk.Frame):
         else:
             self.main_window.shutdown()
 
-    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
+    def get_content_frame(self) -> tk.Frame:
         content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         content.columnconfigure(0, weight=1)
@@ -235,19 +242,25 @@ class GuiGearShift(tk.Frame):
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
 
-    def is_flashing(self) -> bool:
-        return self.flash_display
+    def flasher(self):
+        if self.visible:
+            self.visible = False
+        else:
+            self.visible = True
+        self.after(250, self.flasher)
 
     def render_screen(self):
         format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_shift_screen_title())
-        body = self.get_content_frame(self)
+        body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
         body.grid(row=1, column=0, sticky='ew')
         footer.grid(row=2, column=0, sticky='ew')
+
+        self.flasher()
 
         # pack this frame with the content above
         self.pack()
@@ -257,6 +270,7 @@ class GuiPitSpeed(tk.Frame):
     main_window = None
     my_canvas = None
     flash_display = False
+    visible = True
 
     # this will be a StringVar that we will use as a textvariable in a Label object
     sv_speed = None
@@ -311,9 +325,22 @@ class GuiPitSpeed(tk.Frame):
 
         return self.my_canvas
 
+    def flasher(self):
+        if self.visible:
+            self.visible = False
+        else:
+            self.visible = True
+        self.after(250, self.flasher)
+
     def update_speed_gauge(self):
         self.sv_speed.set(str(shared_memory.speed))
-        self.speed_value.configure(fg=self.speed_color)
+        if self.flash_display:
+            if self.visible:
+                self.speed_value.configure(fg=self.speed_color)
+            else:
+                self.speed_value.configure(fg=shared_memory.settings.get_bg_color())
+        else:
+            self.speed_value.configure(fg=self.speed_color)
 
     def update_speed_blocks(self):
         # reset all the speed blocks
@@ -351,8 +378,8 @@ class GuiPitSpeed(tk.Frame):
         else:
             self.main_window.shutdown()
 
-    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
-        content = tk.Frame(parent)
+    def get_content_frame(self) -> tk.Frame:
+        content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(0, weight=1)  # for speed blocks
@@ -382,19 +409,18 @@ class GuiPitSpeed(tk.Frame):
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
 
-    def is_flashing(self) -> bool:
-        return self.flash_display
-
     def render_screen(self):
         format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_pit_screen_title())
-        body = self.get_content_frame(self)
+        body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
         body.grid(row=1, column=0, sticky='ew')
         footer.grid(row=2, column=0, sticky='ew')
+
+        self.flasher()
 
         # pack this frame with the content above
         self.pack()
@@ -417,7 +443,6 @@ class GuiBrakeTrace(tk.Frame):
 
     font_title = None
 
-
     def __init__(self, this_window: MainWindow, parent: tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
@@ -433,9 +458,6 @@ class GuiBrakeTrace(tk.Frame):
         )
 
         self.render_screen()
-
-    def is_flashing(self) -> bool:
-        return False
 
     def build_plot(self, container):
         self.fig = plt.Figure()
@@ -498,8 +520,8 @@ class GuiBrakeTrace(tk.Frame):
 
         return self.pedal_line,
 
-    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
-        content = tk.Frame(parent)
+    def get_content_frame(self) -> tk.Frame:
+        content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         self.build_plot(content)
         return content
@@ -521,7 +543,7 @@ class GuiBrakeTrace(tk.Frame):
         format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_brake_trace_title())
-        body = self.get_content_frame(self)
+        body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
@@ -563,7 +585,6 @@ class GuiConfig(tk.Frame):
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
-
         self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         self.speed_correction_factor = tk.StringVar()
         self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
@@ -588,15 +609,14 @@ class GuiConfig(tk.Frame):
         shared_memory.set_run_state(RUN_STATE_PENDING_SHUTDOWN)
         self.main_window.shutdown()
 
-    def get_content_frame(self, parent: tk.Frame) -> tk.Frame:
-        content = tk.Frame(parent)
+    def get_content_frame(self) -> tk.Frame:
+        content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         content.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
         content.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
         content.rowconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         content.rowconfigure(2, weight=1)
-
 
         speed_limit = tk.Label(
             content, text="Pit Lane Speed Limit (kph):",
@@ -655,7 +675,7 @@ class GuiConfig(tk.Frame):
         format_outer_frame(self, self.main_window.get_window_height())
 
         header = get_header_frame(self, shared_memory.settings.get_conf_screen_title())
-        body = self.get_content_frame(self)
+        body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
