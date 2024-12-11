@@ -1,0 +1,56 @@
+<can_def>
+    <car>
+        <make>BMW</make>
+        <model>116i</model>
+        <generation>E87</generation>
+        <prod_start>2004</prod_start>
+        <prod_end>2006</prod_end>
+        <messages>
+            <gpi_spec name="rpm">
+                <endian>little</endian>
+                <id>170</id>
+                <byte_range>4-5</byte_range>
+                <bit_mask>0xffff</bit_mask>
+                <multiplier>0.25</multiplier>
+                <offset>0</offset>
+                <units>rpm</units>
+            </gpi_spec>
+            <gpi_spec name="accelerator">
+                <endian>little</endian>
+                <id>170</id>
+                <byte_range>3</byte_range>
+                <bit_mask>0xff</bit_mask>
+                <multiplier>0.3937</multiplier>
+                <offset>0</offset>
+                <units>percentage</units>
+            </gpi_spec>
+            <gpi_spec name="speed">
+                <endian>little</endian>
+                <id>436</id>
+                <byte_range>0-1</byte_range>
+                <bit_mask>0x0fff</bit_mask>
+                <multiplier>0.103</multiplier>
+                <offset>0</offset>
+                <units>kph</units>
+            </gpi_spec>
+            <gpi_spec name="clutch">
+                <endian>little</endian>
+                <id>168</id>
+                <byte_range>5</byte_range>
+                <bit_mask>0x01</bit_mask>
+                <multiplier>1</multiplier>
+                <offset>0</offset>
+                <units>boolean</units>
+            </gpi_spec>
+            <gpi_spec name="brake">
+                <endian>little</endian>
+                <id>414</id>
+                <byte_range>6</byte_range>
+                <bit_mask>0xff</bit_mask>
+                <multiplier>1</multiplier>
+                <offset>0</offset>
+                <units>bar</units>
+            </gpi_spec>
+        </messages>
+    </car>
+</can_def>
