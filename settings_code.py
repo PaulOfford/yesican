@@ -191,6 +191,9 @@ class Settings:
     def get_conf_screen_title(self) -> str:
         return self.config.get('config', 'config_screen_title').replace('"', '')
 
+    def get_canbus_codes(self) -> str:
+        return self.config.get('general', 'canbus_codes').replace('"', '')
+
     def get_speed_correction_factor(self) -> float:
         return float(self.config.get('general', 'speed_correction_factor'))
 

@@ -3,6 +3,7 @@ import os
 import can
 import time
 import pandas as pd
+import xml.etree.ElementTree as ET
 
 import shared_memory
 import my_logger
@@ -12,6 +13,18 @@ from constants import *
 
 class CanInterface:
     bus_vector = None
+
+    def __init__(self):
+        xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
+        self.tree = ET.parse(xml_file_path)
+        root = self.tree.getroot()
+        for child in root:
+            print(child.tag, child.attrib)
+            for grandchild in child:
+                print(grandchild.tag, grandchild.attrib)
+        specs = root.findall('gpi_spec')
+        print(specs)
+        pass
 
     @staticmethod
     def calculate_adjusted_speed(dashboard_speed) -> int:
@@ -70,7 +83,17 @@ class CanInterface:
 
         my_logger.microsec_message(1, "Test data feed stopped")
 
-    def read_live_messages(self):
+    def parse_message(self, element, can_bytes) -> None:
+        value_length = round((len(element.findall('bit_mask')[0].text) - 2) / 2)
+        value_offset = int(element.findall('offset')[0].text)
+        value_bytes = can_bytes[value_offset:value_offset+value_length]
+        mask = bytearray(element.findall('bit_mask')[0].text.encode())
+
+        for i, value_byte in enumerate(value_bytes):
+
+            pass
+
+    def read_live_messages(self) -> None:
         try:
             if platform.system() == 'Windows':
                 self.bus_vector = can.interface.Bus(
@@ -85,6 +108,10 @@ class CanInterface:
             my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
             shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
 
+        xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
+        tree = ET.parse(xml_file_path)
+        root = tree.getroot()
+
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             with self.bus_vector as bus:
 
@@ -93,6 +120,11 @@ class CanInterface:
                     for msg in bus:
                         if shared_memory.get_run_state() != RUN_STATE_RUNNING:
                             break
+
+                        # lookup the arbitration id in the xml file
+                        for i, child in enumerate(root):
+                            if msg.arbitration_id == int(child.findall('id')[0].text):
+                                self.parse_message(child, msg)
 
                         # print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
                         if msg.arbitration_id == 436:  # 436 (0x1b4) gives speed
