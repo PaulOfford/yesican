@@ -83,15 +83,65 @@ class CanInterface:
 
         my_logger.microsec_message(1, "Test data feed stopped")
 
-    def parse_message(self, element, can_bytes) -> None:
-        value_length = round((len(element.findall('bit_mask')[0].text) - 2) / 2)
-        value_offset = int(element.findall('offset')[0].text)
-        value_bytes = can_bytes[value_offset:value_offset+value_length]
-        mask = bytearray(element.findall('bit_mask')[0].text.encode())
+    @staticmethod
+    def get_boolean(value_bytes: []) -> bool:
+        if value_bytes[0] > 0:
+            return True
+        else:
+            return False
 
-        for i, value_byte in enumerate(value_bytes):
+    @staticmethod
+    def get_number(value_bytes: [], multiplier, offset, endian: str):
+        number = 0
 
-            pass
+        if endian == 'little':
+            for i, value_byte in enumerate(value_bytes):
+                number += value_byte * (256 ** i)
+        else:
+            pass  # ToDo: add big endian code
+
+        return (number * multiplier) + offset
+
+    def parse_message(self, metric: ET.Element, can_bytes: []) -> None:
+        mask = []
+        field_length = round((len(metric.findall('bit_mask')[0].text) - 2) / 2)
+        field_offset = int(metric.findall('field_offset')[0].text)
+        value_bytes = can_bytes[field_offset:field_offset + field_length]
+
+        mask_characters = metric.findall('bit_mask')[0].text
+        i = 2
+        while i < len(mask_characters):
+            mask.append(int(metric.findall('bit_mask')[0].text[i:i + 2], 16))
+            i += 2
+
+        for i in range(len(value_bytes)):
+            value_bytes[i] &= mask[i]
+
+        multiplier = float(metric.findall('multiplier')[0].text)
+        offset = float(metric.findall('offset')[0].text)
+
+        if metric.findall('units')[0].text == 'boolean':
+            if metric.attrib['name'] == "clutch":
+                shared_memory.clutch_depressed = self.get_boolean(value_bytes)
+
+        elif metric.attrib['name'] == "rpm":
+            shared_memory.eng_rpm = self.get_number(value_bytes, multiplier, offset, 'little')
+
+            if not shared_memory.clutch_depressed:
+                shared_memory.pre_calc_gear = self.calculate_gear(
+                    speed=shared_memory.speed,
+                    rpm=shared_memory.eng_rpm
+                )
+
+        elif metric.attrib['name'] == "accelerator":
+            shared_memory.pedal_position = self.get_number(value_bytes, multiplier, offset, 'little')
+
+        elif metric.attrib['name'] == "speed":
+            dash_speed = self.get_number(value_bytes, multiplier, offset, 'little')
+            shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
+
+        elif metric.attrib['name'] == "brake":
+            shared_memory.brake_pressure = self.get_number(value_bytes, multiplier, offset, 'little')
 
     def read_live_messages(self) -> None:
         try:
@@ -114,8 +164,6 @@ class CanInterface:
 
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             with self.bus_vector as bus:
-
-                count = 1
                 while shared_memory.get_run_state() == RUN_STATE_RUNNING:
                     for msg in bus:
                         if shared_memory.get_run_state() != RUN_STATE_RUNNING:
@@ -125,38 +173,6 @@ class CanInterface:
                         for i, child in enumerate(root):
                             if msg.arbitration_id == int(child.findall('id')[0].text):
                                 self.parse_message(child, msg)
-
-                        # print(count, hex(msg.arbitration_id), msg.data.hex(' ', -4))
-                        if msg.arbitration_id == 436:  # 436 (0x1b4) gives speed
-                            # (((Byte[1] - 208) * 256) + Byte[0]) / 16 -> gives mph
-                            # therefore
-                            # (((Byte[1] - 208) * 256) + Byte[0]) / 10 -> gives kph
-                            dash_speed = (((int(msg.data[1]) - 208) * 256) + int(msg.data[0])) / 10
-                            shared_memory.speed = self.calculate_adjusted_speed(int(dash_speed))
-                            # print("Speed (kph): ", dash_speed)
-
-                        elif msg.arbitration_id == 170:  # 170 (0xAA) gives rpm
-                            # ((Byte[5] * 256) + Byte[4] ) / 4 -> gives rpm
-                            rpm = ((int(msg.data[5]) * 256) + int(msg.data[4])) / 4
-                            shared_memory.eng_rpm = int(rpm)
-                            # print("Revs (rpm): ", rpm)
-                            if not shared_memory.clutch_depressed:
-                                shared_memory.pre_calc_gear = self.calculate_gear(
-                                speed=shared_memory.speed,
-                                rpm=shared_memory.eng_rpm
-                                )
-                            shared_memory.pedal_position = 100 * int(msg.data[3]) / 254
-
-                        elif msg.arbitration_id == 168:  # 168 (0xA8) contains clutch status
-                            if msg.data[5] & 0x01:
-                                shared_memory.clutch_depressed = True
-                            else:
-                                shared_memory.clutch_depressed = False
-
-                        elif msg.arbitration_id == 414:  # 414 (0x19E) contains brake pressure
-                            shared_memory.brake_pressure = int(msg.data[6])
-
-                        count += 1
 
             self.bus_vector.shutdown()
             my_logger.microsec_message(1, "CAN bus interface closed")
@@ -184,5 +200,3 @@ class CanInterface:
                 self.bus_vector.send(msg)
             except:
                 my_logger.microsec_message(1, "Kicker not needed - backend thread has already exited")
-
-
