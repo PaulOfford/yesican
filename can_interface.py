@@ -14,18 +14,6 @@ from constants import *
 class CanInterface:
     bus_vector = None
 
-    def __init__(self):
-        xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
-        self.tree = ET.parse(xml_file_path)
-        root = self.tree.getroot()
-        for child in root:
-            print(child.tag, child.attrib)
-            for grandchild in child:
-                print(grandchild.tag, grandchild.attrib)
-        specs = root.findall('gpi_spec')
-        print(specs)
-        pass
-
     @staticmethod
     def calculate_adjusted_speed(dashboard_speed) -> int:
         correction_factor = shared_memory.settings.get_speed_correction_factor()
@@ -172,7 +160,8 @@ class CanInterface:
                         # lookup the arbitration id in the xml file
                         for i, child in enumerate(root):
                             if msg.arbitration_id == int(child.findall('id')[0].text):
-                                self.parse_message(child, msg)
+                                # convert the msg.data from a byte array to a list and then parse
+                                self.parse_message(child, list(msg.data))
 
             self.bus_vector.shutdown()
             my_logger.microsec_message(1, "CAN bus interface closed")
