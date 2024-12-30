@@ -462,10 +462,8 @@ class GuiBrakeTrace(tk.Frame):
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
         )
 
-        self.tone_triggers = shared_memory.settings.get_brake_tones()
-
         # generate a brake tone if necessary
-        if shared_memory.settings.get_brake_tone_state():
+        if shared_memory.settings.get_brake_tone_volume() > 0:
             pre_init(44100, -16, 1, 1024)
             pygame.init()
             self.generate_tone()
@@ -477,7 +475,7 @@ class GuiBrakeTrace(tk.Frame):
         if shared_memory.brake_pressure > 0:
             quantize = 10
             freq = (quantize * int((shared_memory.brake_pressure * 6) / quantize)) + 300
-            BrakeTone(frequency=freq, volume=0.1)()
+            BrakeTone(frequency=freq, volume=shared_memory.settings.get_brake_tone_volume()/10)()
 
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(100, self.generate_tone)
@@ -593,6 +591,7 @@ class GuiConfig(tk.Frame):
 
     pit_speed = None  # StringVar
     speed_correction_factor = None  # StringVar
+    brake_tone_volume = None  # StringVar
     fs_status = None  # IntVar
 
     font_title = None
@@ -605,7 +604,6 @@ class GuiConfig(tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         self.main_window = this_window
-        self.pit_speed = tk.StringVar()
 
         self.font_title = font.Font(
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()/4), weight='normal'
@@ -614,9 +612,12 @@ class GuiConfig(tk.Frame):
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
+        self.pit_speed = tk.StringVar()
         self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         self.speed_correction_factor = tk.StringVar()
         self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
+        self.brake_tone_volume = tk.StringVar()
+        self.brake_tone_volume.set(str(shared_memory.settings.get_brake_tone_volume()))
         self.fs_status = tk.IntVar()
         self.fs_status.set(shared_memory.settings.get_fullscreen_state())
         self.render_screen()
@@ -624,6 +625,7 @@ class GuiConfig(tk.Frame):
     def update_config(self) -> None:
         shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
         shared_memory.settings.set_speed_correction_factor(self.speed_correction_factor.get())
+        shared_memory.settings.set_brake_tone_volume(self.brake_tone_volume.get())
         pass
 
     def next_display(self) -> None:
@@ -646,6 +648,7 @@ class GuiConfig(tk.Frame):
         content.rowconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         content.rowconfigure(2, weight=1)
+        content.rowconfigure(3, weight=1)
 
         speed_limit = tk.Label(
             content, text="Pit Lane Speed Limit (kph):",
@@ -660,6 +663,13 @@ class GuiConfig(tk.Frame):
             bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
         )
         correction_factor = tk.Entry(content, textvariable=self.speed_correction_factor)
+
+        brake_tone = tk.Label(
+            content, text="Brake tone volume (0 to 10):",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+        )
+        volume_box = tk.Entry(content, textvariable=self.brake_tone_volume)
 
         fullscreen = tk.Label(
             content, text="Fullscreen Mode:",
@@ -678,8 +688,11 @@ class GuiConfig(tk.Frame):
         correction_factor_label.grid(row=1, column=0, sticky='e', padx=10, pady=5)
         correction_factor.grid(row=1, column=1, sticky='w', padx=10, pady=5)
 
-        fullscreen.grid(row=2, column=0, sticky='e', padx=10, pady=5)
-        fullscreen_check_box.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+        brake_tone.grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        volume_box.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+
+        fullscreen.grid(row=3, column=0, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
 
         return content
 
