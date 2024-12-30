@@ -211,3 +211,28 @@ class Settings:
                 gearing_factor_values[j][0] = int(gearing_factor)
 
         return gearing_factor_values
+
+    def get_brake_tone_state(self):
+        if self.config.get('brakes', 'generate_tones').upper() == 'TRUE':
+            return True
+        else:
+            return False
+
+    def set_brake_tone_state(self, state: bool) -> None:
+        if state:
+            self.config.set('brakes', 'generate_tones', 'true')
+        else:
+            self.config.set('brakes', 'generate_tones', 'false')
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+
+    def get_brake_tones(self):
+        trigger_list = self.config.get('brakes', 'tone_triggers').split()
+        tone_list = self.config.get('brakes', 'tones').split()
+        triggers_and_tones = [[number for number in range(2)] for _ in range(len(trigger_list))]
+
+        for i, trigger in enumerate(trigger_list):
+            triggers_and_tones[i][0] = int(trigger)
+            triggers_and_tones[i][1] = int(tone_list[i])
+
+        return triggers_and_tones

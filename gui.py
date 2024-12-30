@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.font as font
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import pysine
 
 import shared_memory
 
@@ -414,6 +415,8 @@ class GuiBrakeTrace(tk.Frame):
     brake_line = None  # plot line
     pedal_line = None
     ani = None
+    tone_triggers = None
+    last_trigger = 0
 
     font_title = None
 
@@ -432,7 +435,22 @@ class GuiBrakeTrace(tk.Frame):
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
         )
 
+        self.tone_triggers = shared_memory.settings.get_brake_tones()
+
         self.render_screen()
+
+    def generate_tone(self, brake_bar) -> None:
+        length = 0.1
+        delay = 0.3
+
+        if brake_bar > 0:
+            for trigger in reversed(self.tone_triggers):
+                # trigger is a two-element list with [brake_pressure, tone_frequency]
+                if brake_bar >= trigger[0]:
+                    if trigger[0] > 0 and self.last_trigger != trigger[0]:
+                        pysine.sine(frequency=trigger[1], duration=length)
+                        self.last_trigger = trigger[0]
+                    break
 
     def is_flashing(self) -> bool:
         return False
@@ -476,7 +494,7 @@ class GuiBrakeTrace(tk.Frame):
 
             # update pedal position
             self.y_pedal.pop(0)
-            self.y_pedal.append(shared_memory.pedal_position)  # brake pressure
+            self.y_pedal.append(shared_memory.pedal_position)  # throttle pedal position
 
             x = self.x[0:128]
             brake_y = self.y_brake[0:128]
@@ -495,6 +513,10 @@ class GuiBrakeTrace(tk.Frame):
 
             # canvas.draw()
             microsec_message(4, "Brake Trace plot update end")
+
+            # generate a brake tone if necessary
+            if shared_memory.settings.get_brake_tone_state():
+                self.generate_tone(shared_memory.brake_pressure)
 
         return self.pedal_line,
 
