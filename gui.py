@@ -437,20 +437,30 @@ class GuiBrakeTrace(tk.Frame):
 
         self.tone_triggers = shared_memory.settings.get_brake_tones()
 
+        # generate a brake tone if necessary
+        if shared_memory.settings.get_brake_tone_state():
+            self.generate_tone()
+
         self.render_screen()
 
-    def generate_tone(self, brake_bar) -> None:
-        length = 0.1
-        delay = 0.3
+    def generate_tone(self) -> None:
 
-        if brake_bar > 0:
-            for trigger in reversed(self.tone_triggers):
-                # trigger is a two-element list with [brake_pressure, tone_frequency]
-                if brake_bar >= trigger[0]:
-                    if trigger[0] > 0 and self.last_trigger != trigger[0]:
-                        pysine.sine(frequency=trigger[1], duration=length)
-                        self.last_trigger = trigger[0]
-                    break
+        if shared_memory.brake_pressure > 0:
+            quantize = 10
+            freq = (quantize * int(shared_memory.brake_pressure * 6) / quantize) + 300
+            pysine.sine(frequency=freq, duration=0.1)
+
+            # for trigger in reversed(self.tone_triggers):
+            #     # trigger is a two-element list with [brake_pressure, tone_frequency]
+            #     if shared_memory.brake_pressure >= trigger[0]:
+            #         if trigger[0] > 0 and self.last_trigger != trigger[0]:
+            #             pysine.sine(frequency=trigger[1], duration=0.1)
+            #             self.last_trigger = trigger[0]
+            #         break
+
+        if shared_memory.get_run_state() == RUN_STATE_RUNNING:
+            self.after(100, self.generate_tone)
+
 
     def is_flashing(self) -> bool:
         return False
@@ -513,10 +523,6 @@ class GuiBrakeTrace(tk.Frame):
 
             # canvas.draw()
             microsec_message(4, "Brake Trace plot update end")
-
-            # generate a brake tone if necessary
-            if shared_memory.settings.get_brake_tone_state():
-                self.generate_tone(shared_memory.brake_pressure)
 
         return self.pedal_line,
 
