@@ -4,12 +4,14 @@ import tkinter as tk
 import tkinter.font as font
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import pysine
+import pygame
+from array import (array)
+from pygame.mixer import (Sound, get_init, pre_init)
+
 
 import shared_memory
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from time import sleep
 
 from yesican import MainWindow
 from _version import __version__
@@ -401,6 +403,32 @@ class GuiPitSpeed(tk.Frame):
         self.pack()
 
 
+class BrakeTone(Sound):
+    active = True
+    duration = 50
+
+    def __init__(self, frequency=0, volume=0.5):
+        self.frequency = frequency
+        Sound.__init__(self, self.build_samples())
+        self.set_volume(volume)
+
+    def __call__(self):
+        if self.active:
+            self.play(self.duration)
+        return self
+
+    def build_samples(self):
+        period = int(round(get_init()[0] / self.frequency))
+        samples = array("h", [0] * period)
+        amplitude = 2 ** (abs(get_init()[1]) - 1) - 1
+        for time in range(period):
+            if time < (period / 2):
+                samples[time] = +amplitude
+            else:
+                samples[time] = -amplitude
+        return samples
+
+
 class GuiBrakeTrace(tk.Frame):
     main_window = None
     my_canvas = None
@@ -420,7 +448,6 @@ class GuiBrakeTrace(tk.Frame):
 
     font_title = None
 
-
     def __init__(self, this_window: MainWindow, parent: tk.Frame):
         super().__init__(parent)
         self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
@@ -439,6 +466,8 @@ class GuiBrakeTrace(tk.Frame):
 
         # generate a brake tone if necessary
         if shared_memory.settings.get_brake_tone_state():
+            pre_init(44100, -16, 1, 1024)
+            pygame.init()
             self.generate_tone()
 
         self.render_screen()
@@ -447,22 +476,16 @@ class GuiBrakeTrace(tk.Frame):
 
         if shared_memory.brake_pressure > 0:
             quantize = 10
-            freq = (quantize * int(shared_memory.brake_pressure * 6) / quantize) + 300
-            pysine.sine(frequency=freq, duration=0.1)
-
-            # for trigger in reversed(self.tone_triggers):
-            #     # trigger is a two-element list with [brake_pressure, tone_frequency]
-            #     if shared_memory.brake_pressure >= trigger[0]:
-            #         if trigger[0] > 0 and self.last_trigger != trigger[0]:
-            #             pysine.sine(frequency=trigger[1], duration=0.1)
-            #             self.last_trigger = trigger[0]
-            #         break
+            freq = (quantize * int((shared_memory.brake_pressure * 6) / quantize)) + 300
+            BrakeTone(frequency=freq, volume=0.1)()
 
         if shared_memory.get_run_state() == RUN_STATE_RUNNING:
             self.after(100, self.generate_tone)
 
-
-    def is_flashing(self) -> bool:
+    @staticmethod
+    def is_flashing() -> bool:
+        # the brake trace never flashes
+        # we need this function as the MainWindow class calls this for every display in the list
         return False
 
     def build_plot(self, container):
@@ -591,7 +614,6 @@ class GuiConfig(tk.Frame):
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
-
         self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         self.speed_correction_factor = tk.StringVar()
         self.speed_correction_factor.set(str(shared_memory.settings.get_speed_correction_factor()))
@@ -624,7 +646,6 @@ class GuiConfig(tk.Frame):
         content.rowconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         content.rowconfigure(2, weight=1)
-
 
         speed_limit = tk.Label(
             content, text="Pit Lane Speed Limit (kph):",
