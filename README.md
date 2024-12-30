@@ -19,9 +19,11 @@ run on:
 ## Supported Cars
 
 The app currently only supports the BMW E87.  It may work with other
-E8x models.  Adding support for other cars is fairly straightforward;
-it just requires editing of the code in can_interface.py to test for
-the appropriate CAN bus aribitration IDs (CAN IDs) and byte positions.
+E8x models.  Adding support for other cars is fairly straightforward:
+* Make a copy of cars/bmw_e87_2004_2006.xml with a new name
+* Edit the XML file to define the correct CAN bus messages
+* Change the canbus_codes parameter in config.ini file to refer to
+your new XML file
 
 ## Installation
 You can install the software by downloading a zip file or by cloning a
