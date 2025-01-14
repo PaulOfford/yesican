@@ -11,6 +11,7 @@ from _version import __version__
 from my_logger import microsec_message
 from constants import *
 
+
 class MainWindow:
     presentation = None
     frame_list = []
@@ -18,8 +19,8 @@ class MainWindow:
     visible = True
     pit_speed_switch = False  # True - closed, False - open
 
-    def __init__(self, presentation, master):
-        self.presentation = presentation
+    def __init__(self, container, master):
+        self.presentation = container
         mainframe = tk.Frame(master)
         mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
@@ -49,31 +50,11 @@ class MainWindow:
         self.frame_list[desired_display_mode].tkraise()
         self.frame_list[desired_display_mode].pack()
         self.display_mode = desired_display_mode
-        self.flash = False
-        self.visible = True
 
     def next_window(self):
         next_mode = (self.display_mode + 1) % len(self.frame_list)
         microsec_message(2, "Next button to mode " + str(next_mode))
         self.change_window(next_mode)
-
-    def reveal_window(self, current_mode: int) -> None:
-        self.blank_display.forget()  # assumes blank is last frame in the frame_list
-        self.frame_list[current_mode].tkraise()
-        self.visible = True
-        self.frame_list[current_mode].pack()
-
-    def blank_window(self, current_mode: int) -> None:
-        self.frame_list[current_mode].forget()
-        self.blank_display.tkraise()  # assumes blank is last frame in the frame_list
-        self.visible = False
-        self.blank_display.pack()
-
-    def flash_window(self) -> None:
-        if self.visible:
-            self.blank_window(self.display_mode)
-        else:
-            self.reveal_window(self.display_mode)
 
     def check_switch(self, master):
         # check the physical pit speed limiter switch
@@ -87,12 +68,6 @@ class MainWindow:
                 microsec_message(1, "Switch to Gear Shift display")
                 self.change_window(desired_display_mode=0)
                 self.pit_speed_switch = False
-
-        # the display will flash at the rate set in the following master.after statement
-        if self.frame_list[self.display_mode].is_flashing():
-            self.flash_window()
-        elif not self.visible:
-            self.reveal_window(self.display_mode)
 
         # this doesn't have to run at a high frequency as it only processes button and switch events
         master.after(250, lambda: self.check_switch(master))
