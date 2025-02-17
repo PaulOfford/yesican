@@ -514,13 +514,22 @@ class GuiBrakeTrace(tk.Frame):
         return False
 
     def build_plot(self, container):
+        # calculate the desired width of the figure, which is full width less 80 pixels each end
+        # we then need to convert the desired number of pixels into inches at a rate of 100 dpi
+        # i.e. 100 pixels per inch
+        width_pixels = self.main_window.get_window_width()
+        desired_pixels = width_pixels - 48
+        desired_inches = desired_pixels / 100
+
         self.fig = plt.Figure()
+        self.fig.set_figwidth(desired_inches)
         self.fig.patch.set_facecolor(shared_memory.settings.get_bg_color())
 
         canvas = FigureCanvasTkAgg(self.fig, master=container)
         canvas.get_tk_widget().pack()
 
         self.ax = self.fig.add_subplot(111)
+        self.fig.subplots_adjust(left=0.01, right=0.94)
         self.ax.set_xticks([])
         self.ax.yaxis.tick_right()
         self.ax.tick_params(axis='y', colors=shared_memory.settings.get_default_font_color())
@@ -533,6 +542,7 @@ class GuiBrakeTrace(tk.Frame):
         # add the pedal position plot
         self.pedal_line, = self.ax.plot([], [])
         self.pedal_line.set_color('#00bb00')
+
 
     def animate(self, i):
         # need to check for shutdown
@@ -554,9 +564,10 @@ class GuiBrakeTrace(tk.Frame):
             self.y_pedal.pop(0)
             self.y_pedal.append(shared_memory.pedal_position)  # throttle pedal position
 
-            x = self.x[0:128]
-            brake_y = self.y_brake[0:128]
-            pedal_y = self.y_pedal[0:128]
+            n = shared_memory.settings.get_plot_count()
+            x = self.x[0:n]
+            brake_y = self.y_brake[0:n]
+            pedal_y = self.y_pedal[0:n]
 
             # add the brake pressure line to the graph
             self.brake_line.set_xdata(x)

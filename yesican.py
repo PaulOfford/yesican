@@ -42,6 +42,9 @@ class MainWindow:
     def get_window_height(self) -> int:
         return self.presentation.get_window_height()
 
+    def get_window_width(self) -> int:
+        return self.presentation.get_window_width()
+
     def get_display_mode(self) -> int:
         return self.display_mode
 
@@ -91,6 +94,9 @@ class Presentation:
 
     def get_window_height(self) -> int:
         return self.root.winfo_height()
+
+    def get_window_width(self) -> int:
+        return self.root.winfo_width()
 
     def shutdown(self):
         microsec_message(1, "Shutdown requested")
