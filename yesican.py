@@ -16,6 +16,7 @@ class MainWindow:
     presentation = None
     frame_list = []
     display_mode = 0
+    saved_display_mode = 0
     visible = True
     pit_speed_switch = False  # True - closed, False - open
 
@@ -64,12 +65,13 @@ class MainWindow:
         if switcher.is_switch_on():
             if not self.pit_speed_switch:
                 microsec_message(1, "Switch to Pit Speed display")
+                self.saved_display_mode = self.get_display_mode()
                 self.change_window(desired_display_mode=1)
                 self.pit_speed_switch = True
         else:
             if self.pit_speed_switch:
-                microsec_message(1, "Switch to Gear Shift display")
-                self.change_window(desired_display_mode=0)
+                microsec_message(1, "Switch to previous display")
+                self.change_window(desired_display_mode=self.saved_display_mode)
                 self.pit_speed_switch = False
 
         # this doesn't have to run at a high frequency as it only processes button and switch events
