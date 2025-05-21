@@ -112,7 +112,7 @@ class Settings:
             return False
 
     def get_can_adapter(self) -> str:
-        return self.config.get('config', 'can_adapter').replace('"', '')
+        return self.config.get('general', 'can_adapter').replace('"', '')
 
     def get_log_level(self) -> int:
         return int(self.config.get('logging', 'log_level'))
