@@ -10,10 +10,13 @@ from can_interface import CanInterface
 from _version import __version__
 from my_logger import microsec_message
 from constants import *
+from switcher import Switcher
 
 
 class MainWindow:
     presentation = None
+    switcher = None
+
     frame_list = []
     display_mode = 0
     saved_display_mode = 0
@@ -37,7 +40,10 @@ class MainWindow:
         self.blank_display = GuiBlank(mainframe)
         self.blank_display.forget()
 
+        self.switcher = Switcher(len(self.frame_list))
+
     def shutdown(self) -> None:
+        self.switcher.end_gpio()
         self.presentation.shutdown()
 
     def get_window_height(self) -> int:
@@ -56,26 +62,14 @@ class MainWindow:
         self.display_mode = desired_display_mode
 
     def next_window(self):
-        next_mode = (self.display_mode + 1) % len(self.frame_list)
-        microsec_message(2, "Next button to mode " + str(next_mode))
-        self.change_window(next_mode)
+        self.switcher.step_display_mode()
 
-    def check_switch(self, master):
-        # check the physical pit speed limiter switch
-        if switcher.is_switch_on():
-            if not self.pit_speed_switch:
-                microsec_message(1, "Switch to Pit Speed display")
-                self.saved_display_mode = self.get_display_mode()
-                self.change_window(desired_display_mode=1)
-                self.pit_speed_switch = True
-        else:
-            if self.pit_speed_switch:
-                microsec_message(1, "Switch to previous display")
-                self.change_window(desired_display_mode=self.saved_display_mode)
-                self.pit_speed_switch = False
+    def check_display_mode(self, master):
+        if self.switcher.get_target_display_mode() != self.display_mode:
+            self.change_window(desired_display_mode=self.switcher.get_target_display_mode())
 
         # this doesn't have to run at a high frequency as it only processes button and switch events
-        master.after(250, lambda: self.check_switch(master))
+        master.after(250, lambda: self.check_display_mode(master))
 
 
 class Presentation:
@@ -130,7 +124,7 @@ class Presentation:
 
         window = MainWindow(self, self.root)
         self.root.protocol("WM_DELETE_WINDOW", window.shutdown)
-        self.root.after(100, lambda: window.check_switch(self.root))
+        self.root.after(100, lambda: window.check_display_mode(self.root))
         self.root.mainloop()
 
     def kick_backend(self):
