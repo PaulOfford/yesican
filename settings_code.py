@@ -154,6 +154,9 @@ class Settings:
     def get_base_font_size(self) -> int:
         return int(self.config.get('general', 'base_font_size'))
 
+    def get_display_step_gpio_pin(self) -> int:
+        return int(self.config.get('general', 'display_step_gpio_pin'))
+
     def get_power_band_start(self) -> int:
         return int(self.config.get('shift', 'power_band_start'))
 
@@ -171,6 +174,9 @@ class Settings:
 
     def get_pit_screen_title(self) -> str:
         return self.config.get('pit', 'pit_screen_title').replace('"', '')
+
+    def get_pit_switch_gpio_pin(self) -> int:
+        return int(self.config.get('pit', 'pit_switch_gpio_pin'))
 
     def get_brake_trace_title(self) -> str:
         return self.config.get('brakes', 'brake_trace_title').replace('"', '')
