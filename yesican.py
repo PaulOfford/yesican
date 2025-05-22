@@ -43,6 +43,7 @@ class MainWindow:
         self.switcher = Switcher(len(self.frame_list))
 
     def shutdown(self) -> None:
+        self.switcher.end_gpio()
         self.presentation.shutdown()
 
     def get_window_height(self) -> int:
