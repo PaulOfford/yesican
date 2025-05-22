@@ -26,7 +26,21 @@ class Switcher:
                 shared_memory.settings.get_display_step_gpio_pin(), GPIO.IN, pull_up_down=GPIO.PUD_UP
             )  # display step input with pull-up
 
-            # set up the switch handlers
+            # pit speed switch handlers
+            GPIO.add_event_detect(
+                shared_memory.settings.get_pit_switch_gpio_pin(),
+                GPIO.BOTH,
+                callback=self.pit_switch_handler,
+                bouncetime=50
+            )
+
+            # display step switch handler
+            GPIO.add_event_detect(
+                shared_memory.settings.get_display_step_gpio_pin(),
+                GPIO.FALLING,
+                callback=self.display_step_handler(),
+                bouncetime=50
+            )
 
     def get_target_display_mode(self) -> int:
         return self.target_display_mode
