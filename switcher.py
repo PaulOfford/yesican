@@ -71,8 +71,8 @@ class Switcher:
     def display_step_handler(self, channel) -> None:
         self.step_display_mode()
 
-    @staticmethod
-    def end_gpio():
-        # Clean up on exit
-        # not used at the moment due to concerns that this may clobber the GPIO-attached display
-        GPIO.cleanup()
+    def end_gpio(self):
+        if platform.system() == 'Linux':
+            # Clean up on exit
+            # not used at the moment due to concerns that this may clobber the GPIO-attached display
+            GPIO.cleanup()
