@@ -38,7 +38,7 @@ class Switcher:
             GPIO.add_event_detect(
                 shared_memory.settings.get_display_step_gpio_pin(),
                 GPIO.FALLING,
-                callback=self.display_step_handler(),
+                callback=self.display_step_handler,
                 bouncetime=50
             )
 
@@ -52,7 +52,7 @@ class Switcher:
         self.target_display_mode = (self.target_display_mode + 1) % self.number_of_displays
         microsec_message(2, "Next button to mode " + str(self.target_display_mode))
 
-    def pit_switch_handler(self):
+    def pit_switch_handler(self, channel):
         # check the physical pit speed limiter switch
         if not GPIO.input(shared_memory.settings.get_pit_switch_gpio_pin()):
             if not self.in_pit_speed_mode:
@@ -68,7 +68,7 @@ class Switcher:
                 self.target_display_mode = self.saved_display_mode
                 self.in_pit_speed_mode = False
 
-    def display_step_handler(self) -> None:
+    def display_step_handler(self, channel) -> None:
         self.step_display_mode()
 
     @staticmethod
