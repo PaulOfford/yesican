@@ -43,7 +43,10 @@ class MainWindow:
         self.switcher = Switcher(len(self.frame_list))
 
     def shutdown(self) -> None:
-        self.switcher.end_gpio()
+        # if the can interface open fails, we can come through here without the switcher instantiated
+        if self.switcher:
+            self.switcher.end_gpio()
+
         self.presentation.shutdown()
 
     def get_window_height(self) -> int:
