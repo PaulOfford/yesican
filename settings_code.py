@@ -114,6 +114,12 @@ class Settings:
     def get_can_adapter(self) -> str:
         return self.config.get('general', 'can_adapter').replace('"', '')
 
+    def get_send_adapter(self) -> str:
+        return self.config.get('send', 'can_send_adapter').replace('"', '')
+
+    def get_can_rate(self) -> int:
+        return int(self.config.get('general', 'can_rate'))
+
     def get_log_level(self) -> int:
         return int(self.config.get('logging', 'log_level'))
 

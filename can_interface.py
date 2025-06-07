@@ -1,5 +1,5 @@
 import platform
-import os
+import subprocess
 import can
 import time
 import pandas as pd
@@ -13,6 +13,71 @@ from constants import *
 
 class CanInterface:
     bus_vector = None
+    chan_id = None
+
+    @staticmethod
+    def get_bus_windows(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters):
+
+        options = 0
+        if is_listen_only:
+            options = options | 1
+        if is_loopback:
+            options = options | 2
+        if is_one_shot:
+            options = options | 4
+
+        dll_path = '/Windows/System32/usb2can.dll'
+
+        bus = can.interface.Bus(interface="usb2can", channel=chan_id, bitrate=rate, dll=dll_path,
+                                flags=options, can_filters=filters)
+
+        return bus
+
+    @staticmethod
+    def get_bus_linux(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters=None):
+
+        listen_only_on_off = "on" if is_listen_only else "off"
+        loopback_on_off = "on" if is_loopback else "off"
+        oneshot_on_off = "on" if is_one_shot else "off"
+        subprocess.run(['ip',  'link',  'set',  'down', chan_id])
+        subprocess.run(['ip', 'link', 'set', chan_id, 'type', 'can', 'bitrate', str(rate), 'listen-only',
+                        listen_only_on_off, 'loopback', loopback_on_off, 'one-shot', oneshot_on_off])
+        subprocess.run(['ip', 'link', 'set', 'up', chan_id])
+        bus = can.interface.Bus(interface="socketcan", channel=chan_id, can_filters=filters)  # socketcan bus iface
+
+        return bus
+
+    def open_interface(self, bus, is_listen_only=False, is_loopback=False, is_one_shot=False):
+
+        if bus is not None:
+            bus.shutdown()
+
+        try:
+            if platform.system() == 'Windows':
+                self.bus_vector = self.get_bus_windows(
+                                        chan_id=shared_memory.settings.get_can_adapter(),
+                                        rate=shared_memory.settings.get_can_rate(),
+                                        is_listen_only=is_listen_only,
+                                        is_loopback=is_loopback,
+                                        is_one_shot=is_one_shot,
+                                        filters=None
+                )  # we can let most values default
+            elif platform.system() == 'Linux':
+                self.bus_vector = self.get_bus_linux(
+                                        chan_id=shared_memory.settings.get_can_adapter(),
+                                        rate=shared_memory.settings.get_can_rate(),
+                                        is_listen_only=is_listen_only,
+                                        is_loopback=is_loopback,
+                                        is_one_shot=is_one_shot,
+                                        filters=None
+                )  # we can let most values default
+
+        except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
+            my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
+            my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
+            shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
+
+        return self.bus_vector
 
     @staticmethod
     def calculate_adjusted_speed(dashboard_speed) -> int:
@@ -132,19 +197,8 @@ class CanInterface:
             shared_memory.brake_pressure = self.get_number(value_bytes, multiplier, offset, 'little')
 
     def read_live_messages(self) -> None:
-        try:
-            if platform.system() == 'Windows':
-                self.bus_vector = can.interface.Bus(
-                    channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
-                )
-            elif platform.system() == 'Linux':
-                os.system('sudo ip link set can0 down')
-                os.system('sudo ip link set can0 up type can bitrate 100000')
-                self.bus_vector = can.interface.Bus(channel='can0', interface='socketcan')
-        except:
-            my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
-            my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
-            shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
+
+        self.bus_vector = self.open_interface(self.bus_vector)
 
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
         tree = ET.parse(xml_file_path)
@@ -178,14 +232,18 @@ class CanInterface:
         shared_memory.set_run_state(RUN_STATE_BACKEND_STOPPED)
         my_logger.microsec_message(1, "Backend thread exiting")
         exit(0)
-        
+
+    def send_messages(self, message):
+        self.bus_vector.send(message)
+        my_logger.microsec_message(5, str(message))
+
     def kick_backend(self):
         if self.bus_vector:
             my_logger.microsec_message(1, "Give the backend a kick to trigger thread exit")
             # give the can interface a kick in case we don't have incoming messages
             msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
             try:
-                # this may not work if can interface is already shut
+                # this may not work if the CAN interface is already shut
                 self.bus_vector.send(msg)
-            except:
+            except can.exceptions.CanOperationError:
                 my_logger.microsec_message(1, "Kicker not needed - backend thread has already exited")

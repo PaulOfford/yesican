@@ -4,37 +4,17 @@ import os
 import time
 import pandas as pd
 
+from can_interface import CanInterface
 from settings_code import Settings
 from my_logger import microsec_message
 
 settings = Settings()
 
 
-class CanInterface:
-    global settings
-    can1 = None
-
-    def open_interface(self):
-        try:
-            if platform.system() == 'Windows':
-                self.can1 = can.interface.Bus(
-                    channel='2ABDDE6D', interface='usb2can', dll='/Windows/System32/usb2can.dll', bitrate=100000
-                )
-            elif platform.system() == 'Linux':
-                os.system('sudo ip link set can1 down')
-                os.system('sudo ip link set can1 up type can bitrate 100000')
-                self.can1 = can.interface.Bus(channel='can1', interface='socketcan')
-        except:
-            microsec_message(1, "Attempt to open the CAN interface failed")
-
-    def send_messages(self, msg):
-        self.can1.send(msg)
-        microsec_message(5, str(msg))
-
-
 if __name__ == "__main__":
-    canbus = CanInterface()
-    canbus.open_interface()
+    canbus = None
+    interface = CanInterface()
+    canbus = interface.open_interface(canbus)
     microsec_message(1, "CAN bus interface open")
 
     test_data_frame = pd.read_csv('test_data.csv')
@@ -63,12 +43,12 @@ if __name__ == "__main__":
         dash_speed = (int(row['SPEED BMW (kph)']) * 10) + (208 * 256)
         byte1 = int(dash_speed/256)
         byte0 = dash_speed - (byte1 * 256)
-        msg = can.Message(
+        test_msg = can.Message(
             arbitration_id=0x1b4,
             data=[byte0, byte1, 0xe2, 0xf4, 0x16, 0x30, 0xfc, 0xa1],
             is_extended_id=False
         )
-        canbus.send_messages(msg)
+        interface.send_messages(test_msg)
 
         # msg.arbitration_id == 170 - Pedal Position
         # byte 3
@@ -88,7 +68,7 @@ if __name__ == "__main__":
             data=[0x67, 0x32, 0xa0, byte3, byte4, byte5, 0x00, 0x00],
             is_extended_id=False
         )
-        canbus.send_messages(msg)
+        interface.send_messages(msg)
 
         # msg.arbitration_id == 414 - Brake pressure
         # byte 6
@@ -103,7 +83,7 @@ if __name__ == "__main__":
             data=[0x00, 0xec, 0x3f, 0xfc, 0xfe, 0x41, byte6, 0x19],
             is_extended_id=False
         )
-        canbus.send_messages(msg)
+        interface.send_messages(msg)
 
         if i % 10 == 0:
             microsec_message(1, "Test records processed: " + str(i))
