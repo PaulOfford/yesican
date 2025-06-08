@@ -14,7 +14,11 @@ settings = Settings()
 if __name__ == "__main__":
     canbus = None
     interface = CanInterface()
-    canbus = interface.open_interface(canbus)
+    canbus = interface.open_interface(
+        canbus,
+        settings.get_can_send_adapter(),
+        settings.get_can_rate()
+    )
     microsec_message(1, "CAN bus interface open")
 
     test_data_frame = pd.read_csv('test_data.csv')

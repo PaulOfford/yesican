@@ -114,7 +114,7 @@ class Settings:
     def get_can_adapter(self) -> str:
         return self.config.get('general', 'can_adapter').replace('"', '')
 
-    def get_send_adapter(self) -> str:
+    def get_can_send_adapter(self) -> str:
         return self.config.get('send', 'can_send_adapter').replace('"', '')
 
     def get_can_rate(self) -> int:

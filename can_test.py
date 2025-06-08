@@ -6,7 +6,11 @@ if __name__ == "__main__":
     canbus = None
     settings = Settings()
     interface = CanInterface()
-    canbus = interface.open_interface(canbus)
+    canbus = interface.open_interface(
+        canbus,
+        settings.get_can_adapter(),
+        settings.get_can_rate()
+    )
 
     with canbus as bus:
         count = 1

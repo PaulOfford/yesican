@@ -47,7 +47,7 @@ class CanInterface:
 
         return bus
 
-    def open_interface(self, bus, is_listen_only=False, is_loopback=False, is_one_shot=False):
+    def open_interface(self, bus, chan_id, rate, is_listen_only=False, is_loopback=False, is_one_shot=False):
 
         if bus is not None:
             bus.shutdown()
@@ -55,8 +55,8 @@ class CanInterface:
         try:
             if platform.system() == 'Windows':
                 self.bus_vector = self.get_bus_windows(
-                                        chan_id=shared_memory.settings.get_can_adapter(),
-                                        rate=shared_memory.settings.get_can_rate(),
+                                        chan_id=chan_id,
+                                        rate=rate,
                                         is_listen_only=is_listen_only,
                                         is_loopback=is_loopback,
                                         is_one_shot=is_one_shot,
@@ -199,7 +199,11 @@ class CanInterface:
 
     def read_live_messages(self) -> None:
 
-        self.bus_vector = self.open_interface(self.bus_vector)
+        self.bus_vector = self.open_interface(
+                                                self.bus_vector,
+                                                shared_memory.settings.get_can_adapter(),
+                                                shared_memory.settings.get_can_rate()
+        )
 
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
         tree = ET.parse(xml_file_path)
