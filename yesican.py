@@ -116,7 +116,7 @@ class Presentation:
         microsec_message(1, "Shutdown checking that the backend thread has exited")
         self.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
 
-        self.can_interface.bus_vector.shutdown()
+        # self.can_interface.bus_vector.shutdown()
         self.root.destroy()
         microsec_message(1, "Shutdown done - exiting")
         shared_memory.run_state = RUN_STATE_EXITING
