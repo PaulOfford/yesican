@@ -72,7 +72,8 @@ class CanInterface:
                                         filters=None
                 )  # we can let most values default
 
-        except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
+        except:
+            #  except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
             my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
             my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
             shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
@@ -245,5 +246,6 @@ class CanInterface:
             try:
                 # this may not work if the CAN interface is already shut
                 self.bus_vector.send(msg)
-            except can.exceptions.CanOperationError:
+            except:
+                #  except can.exceptions.CanOperationError:
                 my_logger.microsec_message(1, "Kicker not needed - backend thread has already exited")
