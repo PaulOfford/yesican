@@ -52,6 +52,8 @@ class CanInterface:
         if bus is not None:
             bus.shutdown()
 
+        self.chan_id = chan_id
+
         try:
             if platform.system() == 'Windows':
                 self.bus_vector = self.get_bus_windows(

@@ -89,13 +89,17 @@ class Presentation:
 
         # start backend thread
         self.can_interface = CanInterface()
-        if shared_memory.settings.get_test_mode():
+        if not shared_memory.settings.get_test_mode():
             shared_memory.set_run_state(RUN_STATE_PENDING_CAN_OPEN)
             self.can_interface.open_interface(
                                                 bus=None,
                                                 chan_id=shared_memory.settings.get_can_adapter(),
                                                 rate=shared_memory.settings.get_can_rate()
             )
+            while self.can_interface.bus_vector == None:
+                microsec_message(1, "Sleep 1 second to wait for CAN interface")
+                time.sleep(1)
+
         shared_memory.set_run_state(RUN_STATE_RUNNING)
         self.backend_thread = threading.Thread(target=self.can_interface.read_messages)
         self.backend_thread.start()
@@ -141,7 +145,7 @@ class Presentation:
         self.root.mainloop()
 
     def kick_backend(self):
-        self.canbus.kick_backend()
+        self.can_interface.kick_backend()
 
 
 if __name__ == "__main__":
