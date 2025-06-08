@@ -2,6 +2,7 @@ import platform
 import threading
 import time
 
+import shared_memory
 import switcher
 
 from settings_code import Settings
@@ -77,18 +78,26 @@ class MainWindow:
 
 class Presentation:
 
-    canbus = None
+    can_interface = None
     backend_thread = None
     root = None
 
     def __init__(self):
-        shared_memory.set_run_state(RUN_STATE_RUNNING)
+        shared_memory.set_run_state(RUN_STATE_STARTING)
         shared_memory.settings = Settings()
         shared_memory.settings.read_config()
 
         # start backend thread
-        self.canbus = CanInterface()
-        self.backend_thread = threading.Thread(target=self.canbus.read_messages)
+        self.can_interface = CanInterface()
+        if shared_memory.settings.get_test_mode():
+            shared_memory.set_run_state(RUN_STATE_PENDING_CAN_OPEN)
+            self.can_interface.open_interface(
+                                                bus=None,
+                                                chan_id=shared_memory.settings.get_can_adapter(),
+                                                rate=shared_memory.settings.get_can_rate()
+            )
+        shared_memory.set_run_state(RUN_STATE_RUNNING)
+        self.backend_thread = threading.Thread(target=self.can_interface.read_messages)
         self.backend_thread.start()
 
     def get_window_height(self) -> int:
@@ -107,6 +116,7 @@ class Presentation:
         microsec_message(1, "Shutdown checking that the backend thread has exited")
         self.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
 
+        self.can_interface.bus_vector.shutdown()
         self.root.destroy()
         microsec_message(1, "Shutdown done - exiting")
         shared_memory.run_state = RUN_STATE_EXITING

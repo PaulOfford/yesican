@@ -198,13 +198,6 @@ class CanInterface:
             shared_memory.brake_pressure = self.get_number(value_bytes, multiplier, offset, 'little')
 
     def read_live_messages(self) -> None:
-
-        self.bus_vector = self.open_interface(
-                                                self.bus_vector,
-                                                shared_memory.settings.get_can_adapter(),
-                                                shared_memory.settings.get_can_rate()
-        )
-
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
         tree = ET.parse(xml_file_path)
         root = tree.getroot()
