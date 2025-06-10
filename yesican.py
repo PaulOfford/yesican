@@ -2,9 +2,6 @@ import platform
 import threading
 import time
 
-import shared_memory
-import switcher
-
 from settings_code import Settings
 from gui import *
 from can_interface import CanInterface
@@ -26,7 +23,7 @@ class MainWindow:
 
     def __init__(self, container, master):
         self.presentation = container
-        mainframe = tk.Frame(master)
+        mainframe = tk.Frame(master, width=master.winfo_width(), height=master.winfo_height())
         mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
 
@@ -49,12 +46,6 @@ class MainWindow:
             self.switcher.end_gpio()
 
         self.presentation.shutdown()
-
-    def get_window_height(self) -> int:
-        return self.presentation.get_window_height()
-
-    def get_window_width(self) -> int:
-        return self.presentation.get_window_width()
 
     def get_display_mode(self) -> int:
         return self.display_mode
@@ -96,7 +87,7 @@ class Presentation:
                                                 chan_id=shared_memory.settings.get_can_adapter(),
                                                 rate=shared_memory.settings.get_can_rate()
             )
-            while self.can_interface.bus_vector == None:
+            while self.can_interface.bus_vector is None:
                 microsec_message(1, "Sleep 1 second to wait for CAN interface")
                 time.sleep(1)
 

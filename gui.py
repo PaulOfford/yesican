@@ -31,11 +31,11 @@ def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
 
 
-def format_outer_frame(outer_frame: tk.Frame, window_height: int):
+def format_outer_frame(outer_frame: tk.Frame, frame_height: int):
     outer_frame.columnconfigure(0, weight=1)
-    outer_frame.rowconfigure(0, weight=1, minsize=window_height * 0.15)  # 15% for header
-    outer_frame.rowconfigure(1, weight=1, minsize=window_height * 0.70)  # 70% for body
-    outer_frame.rowconfigure(2, weight=1, minsize=window_height * 0.15)  # 15% for footer
+    outer_frame.rowconfigure(0, weight=1, minsize=frame_height * 0.15)  # 15% for header
+    outer_frame.rowconfigure(1, weight=1, minsize=frame_height * 0.70)  # 70% for body
+    outer_frame.rowconfigure(2, weight=1, minsize=frame_height * 0.15)  # 15% for footer
 
 
 def build_header(parent: tk.Frame) -> tk.Frame:
@@ -50,20 +50,20 @@ def build_footer(parent: tk.Frame) -> tk.Frame:
     footer = tk.Frame(parent)
     # Builds a 3 x 1 grid
     footer.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
-    footer.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.4))
-    footer.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.2))
-    footer.columnconfigure(2, weight=1, minsize=int(shared_memory.settings.get_screen_width() * 0.4))
+    footer.columnconfigure(0, weight=1, minsize=int(footer.winfo_width() * 0.4))
+    footer.columnconfigure(1, weight=1, minsize=int(footer.winfo_width() * 0.2))
+    footer.columnconfigure(2, weight=1, minsize=int(footer.winfo_width() * 0.4))
     footer.rowconfigure(0, weight=1)
     return footer
 
 
-def get_header_frame(parent: tk.Frame, page_title: str) -> tk.Frame:
+def get_header_frame(parent: tk.Frame, page_title: str, width: int) -> tk.Frame:
     font_title = font.Font(
         family='Ariel', size=int(shared_memory.settings.get_base_font_size() / 4), weight='normal'
     )
     header = build_header(parent)
     screen_title = tk.Label(
-        header, text=page_title, width=shared_memory.settings.get_screen_width(),
+        header, text=page_title, width=width,
         pady=12, fg=shared_memory.settings.get_default_font_color(),
         bg=shared_memory.settings.get_bg_color(), font=font_title
     )
@@ -121,7 +121,7 @@ class GuiGearShift(tk.Frame):
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
-        self.render_screen()
+        self.render_screen(parent)
         self.process_updates()
 
     @staticmethod
@@ -253,10 +253,10 @@ class GuiGearShift(tk.Frame):
             self.visible = True
         self.after(250, self.flasher)
 
-    def render_screen(self):
-        format_outer_frame(self, self.main_window.get_window_height())
+    def render_screen(self, parent: tk.Frame):
+        format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_shift_screen_title())
+        header = get_header_frame(self, shared_memory.settings.get_shift_screen_title(), parent.winfo_reqwidth())
         body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
@@ -302,7 +302,7 @@ class GuiPitSpeed(tk.Frame):
             family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.1), weight='normal'
         )
 
-        self.render_screen()
+        self.render_screen(parent)
         self.process_updates()
 
     def create_gauge(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
@@ -413,10 +413,9 @@ class GuiPitSpeed(tk.Frame):
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
 
-    def render_screen(self):
-        format_outer_frame(self, self.main_window.get_window_height())
-
-        header = get_header_frame(self, shared_memory.settings.get_pit_screen_title())
+    def render_screen(self, parent: tk.Frame):
+        format_outer_frame(self, parent.winfo_reqheight())
+        header = get_header_frame(self, shared_memory.settings.get_pit_screen_title(), parent.winfo_reqwidth())
         body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
@@ -495,7 +494,7 @@ class GuiBrakeTrace(tk.Frame):
             pygame.init()
             self.generate_tone()
 
-        self.render_screen()
+        self.render_screen(parent)
 
     def generate_tone(self) -> None:
 
@@ -513,11 +512,11 @@ class GuiBrakeTrace(tk.Frame):
         # we need this function as the MainWindow class calls this for every display in the list
         return False
 
-    def build_plot(self, container):
+    def build_plot(self, container, width):
         # calculate the desired width of the figure, which is full width less 80 pixels each end
         # we then need to convert the desired number of pixels into inches at a rate of 100 dpi
         # i.e. 100 pixels per inch
-        width_pixels = self.main_window.get_window_width()
+        width_pixels = width
         desired_pixels = width_pixels - 48
         desired_inches = desired_pixels / 100
 
@@ -542,7 +541,6 @@ class GuiBrakeTrace(tk.Frame):
         # add the pedal position plot
         self.pedal_line, = self.ax.plot([], [])
         self.pedal_line.set_color('#00bb00')
-
 
     def animate(self, i):
         # need to check for shutdown
@@ -588,7 +586,7 @@ class GuiBrakeTrace(tk.Frame):
     def get_content_frame(self) -> tk.Frame:
         content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
-        self.build_plot(content)
+        self.build_plot(content, self.master.winfo_reqwidth())
         return content
 
     def get_footer_frame(self, parent: tk.Frame) -> tk.Frame:
@@ -604,10 +602,10 @@ class GuiBrakeTrace(tk.Frame):
         next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
         return footer
 
-    def render_screen(self):
-        format_outer_frame(self, self.main_window.get_window_height())
+    def render_screen(self, parent: tk.Frame):
+        format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_brake_trace_title())
+        header = get_header_frame(self, shared_memory.settings.get_brake_trace_title(), parent.winfo_reqwidth())
         body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
@@ -659,7 +657,7 @@ class GuiConfig(tk.Frame):
         self.brake_tone_volume.set(str(shared_memory.settings.get_brake_tone_volume()))
         self.fs_status = tk.IntVar()
         self.fs_status.set(shared_memory.settings.get_fullscreen_state())
-        self.render_screen()
+        self.render_screen(parent)
 
     def update_config(self) -> None:
         shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
@@ -752,10 +750,10 @@ class GuiConfig(tk.Frame):
 
         return footer
 
-    def render_screen(self):
-        format_outer_frame(self, self.main_window.get_window_height())
+    def render_screen(self, parent: tk.Frame):
+        format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_conf_screen_title())
+        header = get_header_frame(self, shared_memory.settings.get_conf_screen_title(), parent.winfo_reqwidth())
         body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
