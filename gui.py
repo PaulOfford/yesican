@@ -384,8 +384,8 @@ class GuiPitSpeed(tk.Frame):
         else:
             self.main_window.shutdown()
 
-    def get_content_frame(self) -> tk.Frame:
-        content = tk.Frame(self)
+    def get_content_frame(self, width) -> tk.Frame:
+        content = tk.Frame(self, width=width)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(0, weight=1)  # for speed blocks
@@ -418,7 +418,7 @@ class GuiPitSpeed(tk.Frame):
     def render_screen(self, parent: tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
         header = get_header_frame(self, shared_memory.settings.get_pit_screen_title(), parent.winfo_reqwidth())
-        body = self.get_content_frame()
+        body = self.get_content_frame(parent.winfo_reqwidth())
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
