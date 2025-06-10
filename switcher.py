@@ -39,7 +39,7 @@ class Switcher:
                 shared_memory.settings.get_display_step_gpio_pin(),
                 GPIO.FALLING,
                 callback=self.display_step_handler,
-                bouncetime=100
+                bouncetime=250
             )
 
     def get_target_display_mode(self) -> int:
