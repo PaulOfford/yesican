@@ -135,14 +135,15 @@ class GuiGearShift(tk.Frame):
         return color
 
     def populate_shift_leds(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
+        width = container.winfo_reqwidth()
         radius = shared_memory.settings.led_radius
         self.my_canvas = tk.Canvas(
             container, bg=shared_memory.settings.get_bg_color(),
-            height=(4 * radius), width=shared_memory.settings.get_screen_width(),
+            height=(4 * radius), width=width,
             border=0, highlightthickness=0
         )
         offset = 2.5 * radius
-        xpos = int((shared_memory.settings.get_screen_width() / 2) - (5 * offset))
+        xpos = int((width / 2) - (5 * offset))
         ypos = 2 * radius
 
         for i in range(0, shared_memory.settings.no_of_leds):
@@ -207,8 +208,8 @@ class GuiGearShift(tk.Frame):
         else:
             self.main_window.shutdown()
 
-    def get_content_frame(self) -> tk.Frame:
-        content = tk.Frame(self)
+    def get_content_frame(self, width) -> tk.Frame:
+        content = tk.Frame(self, width=width)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(0, weight=1)  # for LEDs
@@ -257,7 +258,7 @@ class GuiGearShift(tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
 
         header = get_header_frame(self, shared_memory.settings.get_shift_screen_title(), parent.winfo_reqwidth())
-        body = self.get_content_frame()
+        body = self.get_content_frame(parent.winfo_reqheight())
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
@@ -307,15 +308,16 @@ class GuiPitSpeed(tk.Frame):
 
     def create_gauge(self, container: Union[tk.Tk, tk.Frame]) -> tk.Canvas:
         radius = shared_memory.settings.led_radius
+        width = container.winfo_reqwidth()
         self.my_canvas = tk.Canvas(
             container, bg=shared_memory.settings.get_bg_color(),
-            height=(4 * radius), width=shared_memory.settings.get_screen_width(),
+            height=(4 * radius), width=width,
             border=0, highlightthickness=0
         )
 
         blk_width = 80
         blk_height = 20
-        xstart = (shared_memory.settings.get_screen_width() / 2) - (2.5 * blk_width)
+        xstart = (width / 2) - (2.5 * blk_width)
         ypos = 1 * blk_height
 
         for i in range(0, 5):
@@ -677,11 +679,11 @@ class GuiConfig(tk.Frame):
         shared_memory.set_run_state(RUN_STATE_PENDING_SHUTDOWN)
         self.main_window.shutdown()
 
-    def get_content_frame(self) -> tk.Frame:
+    def get_content_frame(self, width: int) -> tk.Frame:
         content = tk.Frame(self)
         content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
-        content.columnconfigure(0, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
-        content.columnconfigure(1, weight=1, minsize=int(shared_memory.settings.get_screen_width()*0.5))
+        content.columnconfigure(0, weight=1, minsize=int(width*0.5))
+        content.columnconfigure(1, weight=1, minsize=int(width*0.5))
         content.rowconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         content.rowconfigure(2, weight=1)
@@ -754,7 +756,7 @@ class GuiConfig(tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
 
         header = get_header_frame(self, shared_memory.settings.get_conf_screen_title(), parent.winfo_reqwidth())
-        body = self.get_content_frame()
+        body = self.get_content_frame(parent.winfo_reqwidth())
         footer = self.get_footer_frame(self)
 
         header.grid(row=0, column=0, sticky='ew')
