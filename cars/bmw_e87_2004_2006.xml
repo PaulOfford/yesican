@@ -49,4 +49,24 @@
         <offset>0</offset>
         <units>bar</units>
     </metric>
+    <metric name="fuel-a">
+        <endian>little</endian>
+        <id>841</id>
+        <data_len>4</data_len>
+        <field_offset>0</field_offset>
+        <bit_mask>0xffff</bit_mask>
+        <multiplier>1</multiplier>
+        <offset>0</offset>
+        <units>bar</units>
+    </metric>
+    <metric name="fuel-b">
+        <endian>little</endian>
+        <id>841</id>
+        <data_len>4</data_len>
+        <field_offset>2</field_offset>
+        <bit_mask>0xffff</bit_mask>
+        <multiplier>1</multiplier>
+        <offset>0</offset>
+        <units>bar</units>
+    </metric>
 </can_def>

@@ -6,7 +6,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 
 import shared_memory
-import my_logger
+from my_logger import microsec_message
 
 from constants import *
 
@@ -14,6 +14,9 @@ from constants import *
 class CanInterface:
     bus_vector = None
     chan_id = None
+
+    fuel_a = 0
+    fuel_b = 0
 
     @staticmethod
     def get_bus_windows(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters):
@@ -75,9 +78,9 @@ class CanInterface:
                 )  # we can let most values default
 
         except:
-            #  except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
-            my_logger.microsec_message(1, "Failed to open the interface to the CAN adapter")
-            my_logger.microsec_message(1, "Signal to the presentation thread that shutdown is needed")
+            # except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
+            microsec_message(1, "Failed to open the interface to the CAN adapter")
+            microsec_message(1, "Signal to the presentation thread that shutdown is needed")
             shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
 
         return self.bus_vector
@@ -116,7 +119,7 @@ class CanInterface:
                 time.sleep(time_offset - last_time_offset)
                 last_time_offset = time_offset
 
-                my_logger.microsec_message(5, "Test message read")
+                microsec_message(5, "Test message read")
 
                 dash_speed = int(row['SPEED BMW (kph)'])
                 shared_memory.speed = self.calculate_adjusted_speed(dash_speed)
@@ -132,12 +135,21 @@ class CanInterface:
 
                 shared_memory.pedal_position = int(row['Pedal Position (%)'])
 
-                my_logger.microsec_message(5, "Test message processed")
+                if shared_memory.pending_race_start:
+                    shared_memory.starting_fuel_level = int(row['Fuel Level (l)'])
+                    shared_memory.race_start_time = int(time.time())
+                    microsec_message(1, f"Race start time set to {shared_memory.race_start_time}")
+                    shared_memory.fuel_burn_rate = shared_memory.settings.get_default_consumption_lpm()
+                    shared_memory.pending_race_start = False
+
+                shared_memory.current_fuel_level = int(row['Fuel Level (l)'])
+
+                microsec_message(5, "Test message processed")
 
             else:
                 break
 
-        my_logger.microsec_message(1, "Test data feed stopped")
+        microsec_message(1, "Test data feed stopped")
 
     @staticmethod
     def get_boolean(value_bytes: []) -> bool:
@@ -199,6 +211,14 @@ class CanInterface:
         elif metric.attrib['name'] == "brake":
             shared_memory.brake_pressure = self.get_number(value_bytes, multiplier, offset, 'little')
 
+        elif metric.attrib['name'] == "fuel-a":
+            self.fuel_a = self.get_number(value_bytes, multiplier, offset, 'little')
+
+        elif metric.attrib['name'] == "fuel-b":
+            self.fuel_b = self.get_number(value_bytes, multiplier, offset, 'little')
+            shared_memory.current_fuel_level = self.fuel_a + self.fuel_b
+            self.fuel_a, self.fuel_b = 0
+
     def read_live_messages(self) -> None:
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
         tree = ET.parse(xml_file_path)
@@ -217,12 +237,18 @@ class CanInterface:
                                 # convert the msg.data from a byte array to a list and then parse
                                 self.parse_message(child, list(msg.data))
 
+                                if shared_memory.pending_race_start and shared_memory.current_fuel_level > 0:
+                                    shared_memory.starting_fuel_level = shared_memory.current_fuel_level
+                                    shared_memory.race_start_time = int(time.time())
+                                    shared_memory.pending_race_start = False
+                                    microsec_message(1, f"Race start time set to {shared_memory.race_start_time}")
+
             self.bus_vector.shutdown()
-            my_logger.microsec_message(1, "CAN bus interface closed")
+            microsec_message(1, "CAN bus interface closed")
 
     def read_messages(self):
         shared_memory.set_run_state(RUN_STATE_RUNNING)
-        my_logger.microsec_message(1, "Backend started")
+        microsec_message(1, "Backend started")
 
         if shared_memory.settings.get_test_mode():
             self.read_test_messages()
@@ -230,16 +256,16 @@ class CanInterface:
             self.read_live_messages()
 
         shared_memory.set_run_state(RUN_STATE_BACKEND_STOPPED)
-        my_logger.microsec_message(1, "Backend thread exiting")
+        microsec_message(1, "Backend thread exiting")
         exit(0)
 
     def send_messages(self, message):
         self.bus_vector.send(message)
-        my_logger.microsec_message(5, str(message))
+        microsec_message(5, str(message))
 
     def kick_backend(self):
         if self.bus_vector:
-            my_logger.microsec_message(1, "Give the backend a kick to trigger thread exit")
+            microsec_message(1, "Give the backend a kick to trigger thread exit")
             # give the can interface a kick in case we don't have incoming messages
             msg = can.Message(arbitration_id=0x2fa, data=[0xff, 0xff, 0xff, 0xff, 0xff], is_extended_id=False)
             try:
@@ -247,4 +273,4 @@ class CanInterface:
                 self.bus_vector.send(msg)
             except:
                 #  except can.exceptions.CanOperationError:
-                my_logger.microsec_message(1, "Kicker not needed - backend thread has already exited")
+                microsec_message(1, "Kicker not needed - backend thread has already exited")

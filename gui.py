@@ -1,4 +1,5 @@
 import tkinter
+import time
 from typing import Union
 import tkinter as tk
 import tkinter.font as font
@@ -29,6 +30,12 @@ def create_circle(x, y, r, canvas, color):  # center coordinates, radius
 
 def round_to_fifty(number: int) -> int:
     return 50 * round(number/50)
+
+
+def convert_sss_to_mm_ss(seconds: int) -> str:
+    mm = int(seconds/60)
+    ss = int(seconds - (mm * 60))
+    return f"{mm}:{ss:02}"
 
 
 def format_outer_frame(outer_frame: tk.Frame, frame_height: int):
@@ -257,7 +264,7 @@ class GuiGearShift(tk.Frame):
     def render_screen(self, parent: tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_shift_screen_title(), parent.winfo_reqwidth())
+        header = get_header_frame(self, shared_memory.settings.get_page_title(DM_GEAR_SHIFT_INDICATOR), parent.winfo_reqwidth())
         body = self.get_content_frame(parent.winfo_reqheight())
         footer = self.get_footer_frame(self)
 
@@ -417,7 +424,7 @@ class GuiPitSpeed(tk.Frame):
 
     def render_screen(self, parent: tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
-        header = get_header_frame(self, shared_memory.settings.get_pit_screen_title(), parent.winfo_reqwidth())
+        header = get_header_frame(self, shared_memory.settings.get_page_title(DM_PIT_SPEED_INDICATOR), parent.winfo_reqwidth())
         body = self.get_content_frame(parent.winfo_reqwidth())
         footer = self.get_footer_frame(self)
 
@@ -607,7 +614,7 @@ class GuiBrakeTrace(tk.Frame):
     def render_screen(self, parent: tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_brake_trace_title(), parent.winfo_reqwidth())
+        header = get_header_frame(self, shared_memory.settings.get_page_title(DM_BRAKE_TRACE_PLOT), parent.winfo_reqwidth())
         body = self.get_content_frame()
         footer = self.get_footer_frame(self)
 
@@ -621,6 +628,192 @@ class GuiBrakeTrace(tk.Frame):
         self.ani = animation.FuncAnimation(
             self.fig, self.animate, shared_memory.settings.get_plot_count(), interval=50, blit=False
         )
+
+
+class GuiFuelBurn(tk.Frame):
+    main_window = None
+    my_canvas = None
+    flash_display = False
+    visible = True
+
+    sv_time_remaining = None
+    sv_fuel_level = None
+    sv_projected_remaining_fuel = None
+
+    gear_value = None
+
+    font_title = None
+    font_gear = None
+
+    screen_title = None
+    shift_lights = None
+    led = []
+    rpm_label = None
+    next_button = None
+
+    def __init__(self, this_window: MainWindow, parent: tk.Frame):
+        super().__init__(parent)
+        self.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        self.main_window = this_window
+
+        self.sv_time_remaining = tk.StringVar()
+        self.sv_fuel_level = tk.StringVar()
+        self.sv_projected_remaining_fuel = tk.StringVar()
+
+        self.font_title = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size() / 4), weight='normal'
+        )
+        self.font_subtitle = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size() / 6), weight='normal'
+        )
+        self.font_gauge = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*1.0), weight='normal'
+        )
+        self.font_units = font.Font(
+            family='Ariel', size=int(int(shared_memory.settings.get_base_font_size())*0.4), weight='normal'
+        )
+        self.font_inputs = font.Font(
+            family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
+        )
+
+        self.render_screen(parent)
+        self.process_updates()
+
+    def update_time_remaining(self):
+        elapsed_secs = time.time() - shared_memory.race_start_time
+        remaining_secs = (shared_memory.settings.get_race_duration() * 60) - elapsed_secs
+        self.sv_time_remaining.set(convert_sss_to_mm_ss(remaining_secs))
+
+    def update_fuel_gauge(self):
+        self.sv_fuel_level.set(shared_memory.current_fuel_level)
+
+    def update_projected_remaining_fuel(self):
+        elapsed_mins = (int(time.time()) - shared_memory.race_start_time) / 60
+        fuel_used = shared_memory.starting_fuel_level - shared_memory.current_fuel_level
+        shared_memory.fuel_burn_rate = fuel_used / elapsed_mins
+        if shared_memory.fuel_burn_rate == 0:
+            shared_memory.fuel_burn_rate = shared_memory.settings.get_default_consumption_lpm()
+
+        remaining_time = shared_memory.settings.get_race_duration() - elapsed_mins
+        fuel_to_be_used = shared_memory.fuel_burn_rate * remaining_time
+
+        # we only want to update the displayed projected number when the fuel level reduces
+        # if we don't do this we get a continuously improving number as we complete more race time
+        # without any change in fuel level
+        if shared_memory.current_fuel_level < shared_memory.previous_fuel_level:
+            self.sv_projected_remaining_fuel.set(int(shared_memory.current_fuel_level - fuel_to_be_used))
+            shared_memory.previous_fuel_level = shared_memory.current_fuel_level
+
+    def process_updates(self):
+        if self.main_window.get_display_mode() == DM_FUEL_BURN:
+            microsec_message(4, "Fuel display update start")
+            self.update_time_remaining()
+            self.update_fuel_gauge()
+            self.update_projected_remaining_fuel()
+            microsec_message(4, "Fuel display update end")
+
+        if shared_memory.get_run_state() == RUN_STATE_RUNNING:
+            self.after(50, self.process_updates)
+        else:
+            self.main_window.shutdown()
+
+    def get_content_frame(self, width) -> tk.Frame:
+        content = tk.Frame(self, width=width)
+        content.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
+        content.columnconfigure(0, weight=1)
+        content.columnconfigure(1, weight=1)
+        content.columnconfigure(2, weight=1)
+        content.columnconfigure(3, weight=1)
+        content.rowconfigure(0, weight=1)
+        content.rowconfigure(1, weight=1)
+        content.rowconfigure(2, weight=1)
+        content.rowconfigure(3, weight=1)
+
+        # widgets
+        self.time_remaining_label = tk.Label(
+            content, text="Time Remaining",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_subtitle
+        )
+
+        self.time_remaining = tk.Label(
+            content, textvariable=self.sv_time_remaining,
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_gauge
+        )
+
+        self.fuel_level_label = tk.Label(
+            content, text="Fuel Level",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_subtitle
+        )
+
+        self.fuel_level = tk.Label(
+            content, textvariable=self.sv_fuel_level,
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_gauge
+        )
+
+        self.fuel_units1 = tk.Label(
+            content, text="L",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_units
+        )
+
+        self.projected_remaining_fuel_label = tk.Label(
+            content, text="Projected Level",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_subtitle
+        )
+
+        self.projected_remaining_fuel = tk.Label(
+            content, textvariable=self.sv_projected_remaining_fuel,
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_gauge
+        )
+
+        self.fuel_units2 = tk.Label(
+            content, text="L",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_units
+        )
+
+        self.time_remaining_label.grid(row=0, column=0, columnspan=4, sticky=tk.EW)
+        self.time_remaining.grid(row=1, column=0, columnspan=4, sticky=tk.EW)
+        self.fuel_level_label.grid(row=2, column=0, columnspan=2, sticky=tk.EW)
+        self.projected_remaining_fuel_label.grid(row=2, column=2, columnspan=2, sticky=tk.EW)
+        self.fuel_level.grid(row=3, column=0, sticky=tk.SE)
+        self.fuel_units1.grid(row=3, column=1, sticky=tk.SW)
+        self.projected_remaining_fuel.grid(row=3, column=2, sticky=tk.SE)
+        self.fuel_units2.grid(row=3, column=3, sticky=tk.SW)
+
+        return content
+
+    def get_footer_frame(self, parent: tk.Frame) -> tkinter.Frame:
+        return build_footer(parent)
+
+    def flasher(self):
+        if self.visible:
+            self.visible = False
+        else:
+            self.visible = True
+        self.after(250, self.flasher)
+
+    def render_screen(self, parent: tk.Frame):
+        format_outer_frame(self, parent.winfo_reqheight())
+
+        header = get_header_frame(self, shared_memory.settings.get_page_title(DM_FUEL_BURN), parent.winfo_reqwidth())
+        body = self.get_content_frame(parent.winfo_reqheight())
+        footer = self.get_footer_frame(self)
+
+        header.grid(row=0, column=0, sticky='ew')
+        body.grid(row=1, column=0, sticky='ew')
+        footer.grid(row=2, column=0, sticky='ew')
+
+        self.flasher()
+
+        # pack this frame with the content above
+        self.pack()
 
 
 class GuiConfig(tk.Frame):
@@ -755,7 +948,7 @@ class GuiConfig(tk.Frame):
     def render_screen(self, parent: tk.Frame):
         format_outer_frame(self, parent.winfo_reqheight())
 
-        header = get_header_frame(self, shared_memory.settings.get_conf_screen_title(), parent.winfo_reqwidth())
+        header = get_header_frame(self, shared_memory.settings.get_page_title(DM_CONFIGURATION), parent.winfo_reqwidth())
         body = self.get_content_frame(parent.winfo_reqwidth())
         footer = self.get_footer_frame(self)
 

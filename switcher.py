@@ -1,4 +1,6 @@
 import platform
+import time
+
 import shared_memory
 
 if platform.system() == 'Linux':
@@ -69,7 +71,13 @@ class Switcher:
                 self.in_pit_speed_mode = False
 
     def display_step_handler(self, channel) -> None:
-        self.step_display_mode()
+
+        # temporary code block to handle race_start_time
+        if self.in_pit_speed_mode:
+            shared_memory.race_start_time = time.time()
+            shared_memory.pending_race_start = True
+        else:
+            self.step_display_mode()
 
     def end_gpio(self):
         if platform.system() == 'Linux':

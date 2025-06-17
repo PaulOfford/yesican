@@ -1,6 +1,5 @@
 import platform
 import threading
-import time
 
 from settings_code import Settings
 from gui import *
@@ -30,7 +29,8 @@ class MainWindow:
         # any change to the following list must be matched with changes to the DM_ ... values on constants.py
         self.frame_list = [
             GuiGearShift(self, mainframe), GuiPitSpeed(self, mainframe),
-            GuiBrakeTrace(self, mainframe), GuiConfig(self, mainframe)
+            GuiBrakeTrace(self, mainframe), GuiFuelBurn(self, mainframe),
+            GuiConfig(self, mainframe)
         ]
 
         for i in range(1, len(self.frame_list)):

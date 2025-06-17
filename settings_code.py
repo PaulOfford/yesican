@@ -3,6 +3,7 @@
 # as this will cause program exceptions and the yesican won't run.
 # Make a backup copy of this file before modifying it.
 import configparser
+from constants import *
 
 
 class Settings:
@@ -175,6 +176,23 @@ class Settings:
     def get_rpm_limit(self) -> int:
         return int(self.config.get('shift', 'rpm_limit'))
 
+    def get_page_title(self, page_id: int) -> str:
+
+        if page_id == DM_GEAR_SHIFT_INDICATOR:
+            title = self.config.get('shift', 'page_title').replace('"', '')
+        elif page_id == DM_PIT_SPEED_INDICATOR:
+            title = self.config.get('pit', 'page_title').replace('"', '')
+        elif page_id == DM_BRAKE_TRACE_PLOT:
+            title = self.config.get('brakes', 'page_title').replace('"', '')
+        elif page_id == DM_FUEL_BURN:
+            title = self.config.get('fuel', 'page_title').replace('"', '')
+        elif page_id == DM_CONFIGURATION:
+            title = self.config.get('config', 'page_title').replace('"', '')
+        else:
+            title = "PAGE_ID UNKNOWN"
+
+        return title
+
     def get_shift_screen_title(self) -> str:
         return self.config.get('shift', 'shift_screen_title').replace('"', '')
 
@@ -227,5 +245,21 @@ class Settings:
 
     def set_brake_tone_volume(self, volume: int) -> None:
         self.config.set('brakes', 'brake_tone_volume', str(volume))
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+
+    def get_race_duration(self) -> int:
+        return int(self.config.get('fuel', 'race_duration'))
+
+    def set_race_duration(self, duration: int) -> None:
+        self.config.set('fuel', 'race_duration', str(duration))
+        with open("config.ini", "w") as f:
+            self.config.write(f)
+
+    def get_default_consumption_lpm(self) -> float:
+        return float(self.config.get('fuel', 'default_consumption_lpm'))
+
+    def set_default_consumption_lpm(self, factor: float) -> None:
+        self.config.set('fuel', 'default_consumption_lpm', str(factor))
         with open("config.ini", "w") as f:
             self.config.write(f)
