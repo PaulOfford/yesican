@@ -1,6 +1,7 @@
 import platform
 import threading
 
+import shared_memory
 from settings_code import Settings
 from gui import *
 from can_interface import CanInterface
@@ -25,6 +26,7 @@ class MainWindow:
         mainframe = tk.Frame(master, width=master.winfo_width(), height=master.winfo_height())
         mainframe.configure(bg=shared_memory.settings.get_bg_color(), borderwidth=0)
         mainframe.pack()
+        shared_memory.font_scale_factor = master.winfo_height() / 480
 
         # any change to the following list must be matched with changes to the DM_ ... values on constants.py
         self.frame_list = [

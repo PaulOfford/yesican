@@ -3,6 +3,8 @@ from settings_code import Settings
 
 settings = Settings()
 
+font_scale_factor = 0
+
 run_state = 3  # see constants.py for a list of run states
 
 eng_rpm = 0

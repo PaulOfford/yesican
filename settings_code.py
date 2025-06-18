@@ -3,6 +3,8 @@
 # as this will cause program exceptions and the yesican won't run.
 # Make a backup copy of this file before modifying it.
 import configparser
+
+import shared_memory
 from constants import *
 
 
@@ -159,7 +161,7 @@ class Settings:
         return self.config.get('general', 'default_font_color').replace("'", "")
 
     def get_base_font_size(self) -> int:
-        return int(self.config.get('general', 'base_font_size'))
+        return int(self.config.get('general', 'base_font_size')) * shared_memory.font_scale_factor
 
     def get_display_step_gpio_pin(self) -> int:
         return int(self.config.get('general', 'display_step_gpio_pin'))

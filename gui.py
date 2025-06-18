@@ -800,7 +800,10 @@ class GuiFuelBurn(tk.Frame):
         return content
 
     def get_footer_frame(self, parent: tk.Frame) -> tkinter.Frame:
-        return build_footer(parent)
+        footer = build_footer(parent)
+        next_button = tk.Button(footer, text='Next', command=self.main_window.next_window)
+        next_button.grid(row=0, column=2, sticky='se', padx=10, pady=10)
+        return footer
 
     def flasher(self):
         if self.visible:
