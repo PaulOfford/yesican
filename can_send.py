@@ -89,6 +89,30 @@ if __name__ == "__main__":
         )
         interface.send_messages(msg)
 
+        # msg.arbitration_id == 841 - fuel level
+        # * get the litre value
+        # * convert to a CAN value using fuel.lut
+        # * split it 40/60 between fuel_left and fuel_right
+        # * place fuel_left in data byte 0 & 1, little endian
+        # * place fuel_right in data byte 0 & 1, little endian
+        fuel_litres = int(row['Fuel Level (l)'])
+        can_total = interface.get_fuel_can_value()
+        fuel_left = can_total * 0.4
+        fuel_right = can_total - fuel_left
+
+        byte1 = int(fuel_left/256)
+        byte0 = fuel_left - (byte1 * 256)
+
+        byte3 = int(fuel_right / 256)
+        byte2 = fuel_right - (byte1 * 256)
+
+        test_msg = can.Message(
+            arbitration_id=0x349,
+            data=[byte0, byte1, byte2, byte3],
+            is_extended_id=False
+        )
+        interface.send_messages(test_msg)
+
         if i % 10 == 0:
             microsec_message(1, "Test records processed: " + str(i))
 
