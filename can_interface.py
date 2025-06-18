@@ -20,7 +20,12 @@ class CanInterface:
 
     fuel_lut = []
 
+    time_test_data_start = 0
+    time_next_obs = 0
+
     def __init__(self):
+        self.time_test_data_start = time.time()
+
         with open('fuel.lut', 'r') as file:
             for line in file:
                 self.fuel_lut.append(int(line))
@@ -124,19 +129,16 @@ class CanInterface:
 
     def read_test_messages(self):
         test_data_frame = pd.read_csv('test_data.csv')
-        last_time_offset = 0
 
         for i, row in test_data_frame.iterrows():
             if shared_memory.get_run_state() == RUN_STATE_RUNNING:
                 # calculate the delay needed
                 time_offset = float(row['Time (s)'])
 
-                # we need to allow for the case where the starting offset is not zero
-                if i == 0:
-                    last_time_offset = time_offset
+                self.time_next_obs = self.time_test_data_start + time_offset
 
-                time.sleep(time_offset - last_time_offset)
-                last_time_offset = time_offset
+                while time.time() < self.time_next_obs:
+                    time.sleep(0.1)
 
                 microsec_message(5, "Test message read")
 
