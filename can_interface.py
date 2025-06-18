@@ -24,7 +24,6 @@ class CanInterface:
         with open('fuel.lut', 'r') as file:
             for line in file:
                 self.fuel_lut.append(int(line))
-        print(self.fuel_lut)
 
     @staticmethod
     def get_bus_windows(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters):
