@@ -264,7 +264,8 @@ class CanInterface:
                                 else:
                                     shared_memory.current_fuel_level = self.get_fuel_litres_value(
                                         self.fuel_a + self.fuel_b)
-                                    self.fuel_a, self.fuel_b = 0
+                                    self.fuel_a = 0
+                                    self.fuel_b = 0
 
             self.bus_vector.shutdown()
             microsec_message(1, "CAN bus interface closed")
