@@ -18,6 +18,14 @@ class CanInterface:
     fuel_a = 0
     fuel_b = 0
 
+    fuel_lut = []
+
+    def __init__(self):
+        with open('fuel.lut', 'r') as file:
+            for line in file:
+                self.fuel_lut.append(int(line))
+        print(self.fuel_lut)
+
     @staticmethod
     def get_bus_windows(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters):
 
@@ -102,6 +110,18 @@ class CanInterface:
                 break
 
         return gear_number  # gear number
+
+    def get_fuel_can_value(self, litres) -> int:
+        # each entry in fuel_lut is a can value who's index is the corresponding number of litres
+        return self.fuel_lut[int(litres)]
+
+    def get_fuel_litres_value(self, can_fuel_total: int) -> int:
+        # each entry in fuel_lut is a can value who's index is the corresponding number of litres
+        for i, can_value in enumerate(reversed(self.fuel_lut)):
+            if can_fuel_total >= can_value:
+                break
+
+        return len(self.fuel_lut) - i
 
     def read_test_messages(self):
         test_data_frame = pd.read_csv('test_data.csv')
@@ -216,8 +236,6 @@ class CanInterface:
 
         elif metric.attrib['name'] == "fuel-b":
             self.fuel_b = self.get_number(value_bytes, multiplier, offset, 'little')
-            shared_memory.current_fuel_level = self.fuel_a + self.fuel_b
-            self.fuel_a, self.fuel_b = 0
 
     def read_live_messages(self) -> None:
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
@@ -242,6 +260,10 @@ class CanInterface:
                                     shared_memory.race_start_time = int(time.time())
                                     shared_memory.pending_race_start = False
                                     microsec_message(1, f"Race start time set to {shared_memory.race_start_time}")
+                                else:
+                                    shared_memory.current_fuel_level = self.get_fuel_litres_value(
+                                        self.fuel_a + self.fuel_b)
+                                    self.fuel_a, self.fuel_b = 0
 
             self.bus_vector.shutdown()
             microsec_message(1, "CAN bus interface closed")
