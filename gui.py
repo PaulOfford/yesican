@@ -33,9 +33,16 @@ def round_to_fifty(number: int) -> int:
 
 
 def convert_sss_to_mm_ss(seconds: int) -> str:
+    if seconds < 0:
+        seconds *= -1
+        neg_symbol = "-"
+    else:
+        neg_symbol = ""
+
     mm = int(seconds/60)
     ss = int(seconds - (mm * 60))
-    return f"{mm:02}:{ss:02}"
+
+    return f"{neg_symbol}{mm:02}:{ss:02}"
 
 
 def format_outer_frame(outer_frame: tk.Frame, frame_height: int):
@@ -690,9 +697,12 @@ class GuiFuelBurn(tk.Frame):
     def update_projected_remaining_fuel(self):
         elapsed_mins = (int(time.time()) - shared_memory.race_start_time) / 60
         fuel_used = shared_memory.starting_fuel_level - shared_memory.current_fuel_level
-        shared_memory.fuel_burn_rate = fuel_used / elapsed_mins
-        if shared_memory.fuel_burn_rate == 0:
+
+        # it's only after burning 2 litres can we make a reasonable calculation
+        if fuel_used < 2:
             shared_memory.fuel_burn_rate = shared_memory.settings.get_default_consumption_lpm()
+        else:
+            shared_memory.fuel_burn_rate = fuel_used / elapsed_mins
 
         remaining_time = shared_memory.settings.get_race_duration() - elapsed_mins
         fuel_to_be_used = shared_memory.fuel_burn_rate * remaining_time
@@ -701,7 +711,7 @@ class GuiFuelBurn(tk.Frame):
         # if we don't do this we get a continuously improving number as we complete more race time
         # without any change in fuel level
         if shared_memory.current_fuel_level < shared_memory.previous_fuel_level:
-            self.sv_projected_remaining_fuel.set(int(shared_memory.current_fuel_level - fuel_to_be_used))
+            self.sv_projected_remaining_fuel.set(int(round(shared_memory.current_fuel_level - fuel_to_be_used, 0)))
             shared_memory.previous_fuel_level = shared_memory.current_fuel_level
 
     def process_updates(self):
