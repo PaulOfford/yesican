@@ -35,7 +35,7 @@ def round_to_fifty(number: int) -> int:
 def convert_sss_to_mm_ss(seconds: int) -> str:
     mm = int(seconds/60)
     ss = int(seconds - (mm * 60))
-    return f"{mm}:{ss:02}"
+    return f"{mm:02}:{ss:02}"
 
 
 def format_outer_frame(outer_frame: tk.Frame, frame_height: int):
