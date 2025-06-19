@@ -687,32 +687,40 @@ class GuiFuelBurn(tk.Frame):
         self.process_updates()
 
     def update_time_remaining(self):
-        elapsed_secs = time.time() - shared_memory.race_start_time
-        remaining_secs = (shared_memory.settings.get_race_duration() * 60) - elapsed_secs
-        self.sv_time_remaining.set(convert_sss_to_mm_ss(remaining_secs))
+        if shared_memory.race_start_time > 0:
+            elapsed_secs = time.time() - shared_memory.race_start_time
+            remaining_secs = (shared_memory.settings.get_race_duration() * 60) - elapsed_secs
+            self.sv_time_remaining.set(convert_sss_to_mm_ss(remaining_secs))
+        else:
+            self.sv_time_remaining.set("--:--")
 
     def update_fuel_gauge(self):
         self.sv_fuel_level.set(shared_memory.current_fuel_level)
 
     def update_projected_remaining_fuel(self):
-        elapsed_mins = (int(time.time()) - shared_memory.race_start_time) / 60
-        fuel_used = shared_memory.starting_fuel_level - shared_memory.current_fuel_level
+        if shared_memory.race_start_time > 0:
+            elapsed_mins = (int(time.time()) - shared_memory.race_start_time) / 60
+            fuel_used = shared_memory.starting_fuel_level - shared_memory.current_fuel_level
 
-        # it's only after burning 2 litres can we make a reasonable calculation
-        if fuel_used < 2:
-            shared_memory.fuel_burn_rate = shared_memory.settings.get_default_consumption_lpm()
+            # it's only after burning 2 litres can we make a reasonable calculation
+            if fuel_used < 2:
+                shared_memory.fuel_burn_rate = shared_memory.settings.get_default_consumption_lpm()
+            else:
+                shared_memory.fuel_burn_rate = fuel_used / elapsed_mins
+
+            remaining_time = shared_memory.settings.get_race_duration() - elapsed_mins
+            fuel_to_be_used = shared_memory.fuel_burn_rate * remaining_time
+
+            # we only want to update the displayed projected number when the fuel level reduces
+            # if we don't do this we get a continuously improving number as we complete more race time
+            # without any change in fuel level
+            if shared_memory.current_fuel_level < shared_memory.previous_fuel_level:
+                self.sv_projected_remaining_fuel.set(int(round(shared_memory.current_fuel_level - fuel_to_be_used, 0)))
+                shared_memory.previous_fuel_level = shared_memory.current_fuel_level
         else:
-            shared_memory.fuel_burn_rate = fuel_used / elapsed_mins
+            self.sv_projected_remaining_fuel.set("---")
 
-        remaining_time = shared_memory.settings.get_race_duration() - elapsed_mins
-        fuel_to_be_used = shared_memory.fuel_burn_rate * remaining_time
-
-        # we only want to update the displayed projected number when the fuel level reduces
-        # if we don't do this we get a continuously improving number as we complete more race time
-        # without any change in fuel level
-        if shared_memory.current_fuel_level < shared_memory.previous_fuel_level:
-            self.sv_projected_remaining_fuel.set(int(round(shared_memory.current_fuel_level - fuel_to_be_used, 0)))
-            shared_memory.previous_fuel_level = shared_memory.current_fuel_level
+        return
 
     def process_updates(self):
         if self.main_window.get_display_mode() == DM_FUEL_BURN:

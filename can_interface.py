@@ -191,6 +191,24 @@ class CanInterface:
 
         return (number * multiplier) + offset
 
+    def process_fuel_metric(self, tank, value_bytes, multiplier, offset) -> None:
+        if tank == "fuel-a":
+            self.fuel_a = self.get_number(value_bytes, multiplier, offset, 'little')
+        else:
+            self.fuel_b = self.get_number(value_bytes, multiplier, offset, 'little')
+
+            shared_memory.current_fuel_level = self.get_fuel_litres_value(self.fuel_a + self.fuel_b)
+            self.fuel_a = 0
+            self.fuel_b = 0
+
+            if shared_memory.pending_race_start:
+                shared_memory.starting_fuel_level = shared_memory.current_fuel_level
+                shared_memory.race_start_time = int(time.time())
+                shared_memory.pending_race_start = False
+                microsec_message(1, f"Race start time set to {shared_memory.race_start_time}")
+
+        return
+
     def parse_message(self, metric: ET.Element, can_bytes: []) -> None:
         mask = []
         field_length = round((len(metric.findall('bit_mask')[0].text) - 2) / 2)
@@ -233,10 +251,12 @@ class CanInterface:
             shared_memory.brake_pressure = self.get_number(value_bytes, multiplier, offset, 'little')
 
         elif metric.attrib['name'] == "fuel-a":
-            self.fuel_a = self.get_number(value_bytes, multiplier, offset, 'little')
+            self.process_fuel_metric("fuel-a", value_bytes, multiplier, offset)
 
         elif metric.attrib['name'] == "fuel-b":
-            self.fuel_b = self.get_number(value_bytes, multiplier, offset, 'little')
+            self.process_fuel_metric("fuel-b", value_bytes, multiplier, offset)
+
+        return
 
     def read_live_messages(self) -> None:
         xml_file_path = "cars/" + shared_memory.settings.get_canbus_codes()
@@ -255,17 +275,6 @@ class CanInterface:
                             if msg.arbitration_id == int(child.findall('id')[0].text):
                                 # convert the msg.data from a byte array to a list and then parse
                                 self.parse_message(child, list(msg.data))
-
-                                if shared_memory.pending_race_start and shared_memory.current_fuel_level > 0:
-                                    shared_memory.starting_fuel_level = shared_memory.current_fuel_level
-                                    shared_memory.race_start_time = int(time.time())
-                                    shared_memory.pending_race_start = False
-                                    microsec_message(1, f"Race start time set to {shared_memory.race_start_time}")
-                                else:
-                                    shared_memory.current_fuel_level = self.get_fuel_litres_value(
-                                        self.fuel_a + self.fuel_b)
-                                    self.fuel_a = 0
-                                    self.fuel_b = 0
 
             self.bus_vector.shutdown()
             microsec_message(1, "CAN bus interface closed")
