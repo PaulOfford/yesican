@@ -865,6 +865,10 @@ class GuiConfig(tk.Frame):
             family='Ariel', size=int(shared_memory.settings.get_base_font_size()*0.12), weight='normal'
         )
 
+        self.race_duration = tk.StringVar()
+        self.race_duration.set(str(shared_memory.settings.get_race_duration()))
+        self.default_consumption_lpm = tk.StringVar()
+        self.default_consumption_lpm.set(str(shared_memory.settings.get_default_consumption_lpm()))
         self.pit_speed = tk.StringVar()
         self.pit_speed.set(str(shared_memory.settings.get_pit_speed_limit()))
         self.speed_correction_factor = tk.StringVar()
@@ -876,6 +880,8 @@ class GuiConfig(tk.Frame):
         self.render_screen(parent)
 
     def update_config(self) -> None:
+        shared_memory.settings.set_race_duration(self.race_duration.get())
+        shared_memory.settings.set_default_consumption_lpm(self.default_consumption_lpm.get())
         shared_memory.settings.set_pit_speed_limit(self.pit_speed.get())
         shared_memory.settings.set_speed_correction_factor(self.speed_correction_factor.get())
         shared_memory.settings.set_brake_tone_volume(self.brake_tone_volume.get())
@@ -902,6 +908,22 @@ class GuiConfig(tk.Frame):
         content.rowconfigure(1, weight=1)
         content.rowconfigure(2, weight=1)
         content.rowconfigure(3, weight=1)
+        content.rowconfigure(4, weight=1)
+        content.rowconfigure(5, weight=1)
+
+        race_duration = tk.Label(
+            content, text="Race Duration (mins):",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+        )
+        race_duration_box = tk.Entry(content, textvariable=self.race_duration)
+
+        default_consumption_lpm = tk.Label(
+            content, text="Default Fuel Burn Rate (lpm):",
+            fg=shared_memory.settings.get_default_font_color(),
+            bg=shared_memory.settings.get_bg_color(), font=self.font_inputs
+        )
+        default_consumption_lpm_box = tk.Entry(content, textvariable=self.default_consumption_lpm)
 
         speed_limit = tk.Label(
             content, text="Pit Lane Speed Limit (kph):",
@@ -934,18 +956,29 @@ class GuiConfig(tk.Frame):
             borderwidth=0,
             command=lambda: shared_memory.settings.set_fullscreen_state(self.fs_status.get())
         )
+        content_row = 0
+        race_duration.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        race_duration_box.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
 
-        speed_limit.grid(row=0, column=0, sticky='e', padx=10, pady=5)
-        speed_box.grid(row=0, column=1, sticky='w', padx=10, pady=5)
+        content_row += 1
+        default_consumption_lpm.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        default_consumption_lpm_box.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
 
-        correction_factor_label.grid(row=1, column=0, sticky='e', padx=10, pady=5)
-        correction_factor.grid(row=1, column=1, sticky='w', padx=10, pady=5)
+        content_row += 1
+        speed_limit.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        speed_box.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
 
-        brake_tone.grid(row=2, column=0, sticky='e', padx=10, pady=5)
-        volume_box.grid(row=2, column=1, sticky='w', padx=10, pady=5)
+        content_row += 1
+        correction_factor_label.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        correction_factor.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
 
-        fullscreen.grid(row=3, column=0, sticky='e', padx=10, pady=5)
-        fullscreen_check_box.grid(row=3, column=1, sticky='w', padx=10, pady=5)
+        content_row += 1
+        brake_tone.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        volume_box.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
+
+        content_row += 1
+        fullscreen.grid(row=content_row, column=0, sticky='e', padx=10, pady=5)
+        fullscreen_check_box.grid(row=content_row, column=1, sticky='w', padx=10, pady=5)
 
         return content
 

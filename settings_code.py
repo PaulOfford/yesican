@@ -108,6 +108,9 @@ class Settings:
         # Read the configuration file
         self.config.read('config.ini')
 
+    def reload_config(self) -> None:
+        self.read_config()
+
     def get_test_mode(self) -> bool:
         if self.config.get('general', 'test_mode').upper() == 'TRUE':
             return True
@@ -133,6 +136,7 @@ class Settings:
         self.config.set('pit', 'pit_speed_limit', str(speed))
         with open("config.ini", "w") as f:
             self.config.write(f)
+        self.reload_config()
 
     def get_fullscreen_state(self) -> bool:
         if self.config.get('general', 'fullscreen').upper() == 'TRUE':
@@ -226,6 +230,7 @@ class Settings:
         self.config.set('general', 'speed_correction_factor', str(factor))
         with open("config.ini", "w") as f:
             self.config.write(f)
+        self.reload_config()
 
     def get_gearing_factor(self):
         gearing_factor_list = self.config.get('general', 'gearing_factor').split()
@@ -249,6 +254,7 @@ class Settings:
         self.config.set('brakes', 'brake_tone_volume', str(volume))
         with open("config.ini", "w") as f:
             self.config.write(f)
+        self.reload_config()
 
     def get_race_duration(self) -> int:
         return int(self.config.get('fuel', 'race_duration'))
@@ -257,6 +263,7 @@ class Settings:
         self.config.set('fuel', 'race_duration', str(duration))
         with open("config.ini", "w") as f:
             self.config.write(f)
+        self.reload_config()
 
     def get_default_consumption_lpm(self) -> float:
         return float(self.config.get('fuel', 'default_consumption_lpm'))
@@ -265,3 +272,4 @@ class Settings:
         self.config.set('fuel', 'default_consumption_lpm', str(factor))
         with open("config.ini", "w") as f:
             self.config.write(f)
+        self.reload_config()
