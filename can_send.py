@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
         # msg.arbitration_id == 841 - fuel level
         # * get the litre value
-        # * convert to a CAN value using fuel.lut
+        # * convert to a CAN value using bmw_e87_2004_2006_fuel.lut
         # * split it 40/60 between fuel_left and fuel_right
         # * place fuel_left in data byte 0 & 1, little endian
         # * place fuel_right in data byte 0 & 1, little endian

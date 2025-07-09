@@ -223,6 +223,9 @@ class Settings:
     def get_canbus_codes(self) -> str:
         return self.config.get('general', 'canbus_codes').replace('"', '')
 
+    def get_fuel_lut(self) -> str:
+        return self.config.get('general', 'fuel_lut').replace('"', '')
+
     def get_speed_correction_factor(self) -> float:
         return float(self.config.get('general', 'speed_correction_factor'))
 

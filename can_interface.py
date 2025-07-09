@@ -25,8 +25,9 @@ class CanInterface:
 
     def __init__(self):
         self.time_test_data_start = time.time()
+        fuel_lut_path = "cars/" + shared_memory.settings.get_fuel_lut()
 
-        with open('fuel.lut', 'r') as file:
+        with open(fuel_lut_path, 'r') as file:
             for line in file:
                 self.fuel_lut.append(int(line))
 
