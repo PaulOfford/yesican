@@ -31,6 +31,22 @@ class CanInterface:
             for line in file:
                 self.fuel_lut.append(int(line))
 
+    def is_message_arrived(self) -> bool:
+        retry_count = 5
+
+        # Check that messages are arriving from the CANbus interface
+        while retry_count > 0:
+
+            msg = self.bus_vector.recv(timeout=0.1)
+
+            if msg is not None:
+                if not msg.is_error_frame and not msg.is_remote_frame:
+                    return True
+
+            retry_count -= 1
+
+        return False
+
     @staticmethod
     def get_bus_windows(chan_id, rate, is_listen_only, is_loopback, is_one_shot, filters):
 
@@ -63,40 +79,95 @@ class CanInterface:
 
         return bus
 
-    def open_interface(self, bus, chan_id, rate, is_listen_only=False, is_loopback=False, is_one_shot=False):
+    def open_interface(self, bus, chan_id, rate,
+                       is_listen_only=False,
+                       is_loopback=False,
+                       is_one_shot=False):
 
-        if bus is not None:
-            bus.shutdown()
-
+        interface_retries = 5
         self.chan_id = chan_id
+        self.bus_vector = bus
 
-        try:
-            if platform.system() == 'Windows':
-                self.bus_vector = self.get_bus_windows(
-                                        chan_id=chan_id,
-                                        rate=rate,
-                                        is_listen_only=is_listen_only,
-                                        is_loopback=is_loopback,
-                                        is_one_shot=is_one_shot,
-                                        filters=None
-                )  # we can let most values default
-            elif platform.system() == 'Linux':
-                self.bus_vector = self.get_bus_linux(
-                                        chan_id=shared_memory.settings.get_can_adapter(),
-                                        rate=shared_memory.settings.get_can_rate(),
-                                        is_listen_only=is_listen_only,
-                                        is_loopback=is_loopback,
-                                        is_one_shot=is_one_shot,
-                                        filters=None
-                )  # we can let most values default
+        while interface_retries > 0:
 
-        except:
-            # except (ValueError, can.exceptions.CanInitializationError, can.exceptions.CanInterfaceNotImplementedError):
-            microsec_message(1, "Failed to open the interface to the CAN adapter")
-            microsec_message(1, "Signal to the presentation thread that shutdown is needed")
-            shared_memory.set_run_state(RUN_STATE_CAN_INTERFACE_FAILURE)
+            microsec_message(
+                1, f"Opening CAN interface - "
+                   f"{interface_retries} attempts remaining"
+            )
 
-        return self.bus_vector
+            try:
+                # Close any previously opened interface
+                if self.bus_vector is not None:
+                    self.bus_vector.shutdown()
+                    self.bus_vector = None
+
+                if platform.system() == 'Windows':
+                    self.bus_vector = self.get_bus_windows(
+                        chan_id=chan_id,
+                        rate=rate,
+                        is_listen_only=is_listen_only,
+                        is_loopback=is_loopback,
+                        is_one_shot=is_one_shot,
+                        filters=None
+                    )
+
+                elif platform.system() == 'Linux':
+                    self.bus_vector = self.get_bus_linux(
+                        chan_id=shared_memory.settings.get_can_adapter(),
+                        rate=shared_memory.settings.get_can_rate(),
+                        is_listen_only=is_listen_only,
+                        is_loopback=is_loopback,
+                        is_one_shot=is_one_shot,
+                        filters=None
+                    )
+
+                # Confirm that CAN messages are arriving
+                if self.is_message_arrived():
+                    microsec_message(
+                        1, "CAN interface receiving messages"
+                    )
+                    return self.bus_vector
+
+                microsec_message(
+                    1, "No messages received from CAN interface"
+                )
+
+            except (ValueError,
+                    can.exceptions.CanError,
+                    subprocess.CalledProcessError,
+                    OSError) as e:
+
+                microsec_message(
+                    1, f"CAN interface error: {e}"
+                )
+
+            interface_retries -= 1
+
+            if interface_retries > 0:
+                microsec_message(
+                    1, "Restarting CAN interface"
+                )
+                time.sleep(0.5)
+
+        # All attempts have failed
+        if self.bus_vector is not None:
+            self.bus_vector.shutdown()
+            self.bus_vector = None
+
+        microsec_message(
+            1, "Failed to open a working CAN interface"
+        )
+
+        microsec_message(
+            1, "Signal to the presentation thread "
+               "that shutdown is needed"
+        )
+
+        shared_memory.set_run_state(
+            RUN_STATE_CAN_INTERFACE_FAILURE
+        )
+
+        return None
 
     @staticmethod
     def calculate_adjusted_speed(dashboard_speed) -> int:
@@ -121,6 +192,7 @@ class CanInterface:
         return self.fuel_lut[int(litres)]
 
     def get_fuel_litres_value(self, can_fuel_total: int) -> int:
+        i = 0
         # each entry in fuel_lut is a can value who's index is the corresponding number of litres
         for i, can_value in enumerate(reversed(self.fuel_lut)):
             if can_fuel_total >= can_value:
@@ -305,6 +377,6 @@ class CanInterface:
             try:
                 # this may not work if the CAN interface is already shut
                 self.bus_vector.send(msg)
-            except:
+            except (can.CanOperationError, can.CanTimeoutError):
                 #  except can.exceptions.CanOperationError:
                 microsec_message(1, "Kicker not needed - backend thread has already exited")
