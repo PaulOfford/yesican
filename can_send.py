@@ -17,7 +17,8 @@ if __name__ == "__main__":
     canbus = interface.open_interface(
         canbus,
         settings.get_can_send_adapter(),
-        settings.get_can_rate()
+        settings.get_can_rate(),
+        rx_check=False
     )
     microsec_message(1, "CAN bus interface open")
 

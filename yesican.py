@@ -85,17 +85,16 @@ class Presentation:
         if not shared_memory.settings.get_test_mode():
             shared_memory.set_run_state(RUN_STATE_PENDING_CAN_OPEN)
             self.can_interface.open_interface(
-                                                bus=None,
-                                                chan_id=shared_memory.settings.get_can_adapter(),
-                                                rate=shared_memory.settings.get_can_rate()
+                bus=None,
+                chan_id=shared_memory.settings.get_can_adapter(),
+                rate=shared_memory.settings.get_can_rate(),
+                rx_check=True
             )
-            while self.can_interface.bus_vector is None:
-                microsec_message(1, "Sleep 1 second to wait for CAN interface")
-                time.sleep(1)
 
-        shared_memory.set_run_state(RUN_STATE_RUNNING)
-        self.backend_thread = threading.Thread(target=self.can_interface.read_messages)
-        self.backend_thread.start()
+            if self.can_interface.bus_vector is not None:
+                shared_memory.set_run_state(RUN_STATE_RUNNING)
+                self.backend_thread = threading.Thread(target=self.can_interface.read_messages)
+                self.backend_thread.start()
 
     def get_window_height(self) -> int:
         return self.root.winfo_height()
@@ -111,7 +110,10 @@ class Presentation:
         self.kick_backend()
 
         microsec_message(1, "Shutdown checking that the backend thread has exited")
-        self.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
+        if self.backend_thread is None:
+            microsec_message(1, "The backend thread wasn't started")
+        else:
+            self.backend_thread.join(0.5)  # wait for up to 500ms for the backend thread to exit
 
         # self.can_interface.bus_vector.shutdown()
         self.root.destroy()

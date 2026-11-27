@@ -82,7 +82,9 @@ class CanInterface:
     def open_interface(self, bus, chan_id, rate,
                        is_listen_only=False,
                        is_loopback=False,
-                       is_one_shot=False):
+                       is_one_shot=False,
+                       rx_check=True
+                       ):
 
         interface_retries = 5
         self.chan_id = chan_id
@@ -120,6 +122,13 @@ class CanInterface:
                         is_one_shot=is_one_shot,
                         filters=None
                     )
+
+                # Confirm that CAN messages are arriving
+                if not rx_check:
+                    microsec_message(
+                        1, "No check for messages but interface is up"
+                    )
+                    return self.bus_vector
 
                 # Confirm that CAN messages are arriving
                 if self.is_message_arrived():
