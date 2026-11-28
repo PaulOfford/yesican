@@ -115,8 +115,8 @@ class CanInterface:
 
                 elif platform.system() == 'Linux':
                     self.bus_vector = self.get_bus_linux(
-                        chan_id=shared_memory.settings.get_can_adapter(),
-                        rate=shared_memory.settings.get_can_rate(),
+                        chan_id=chan_id,
+                        rate=rate,
                         is_listen_only=is_listen_only,
                         is_loopback=is_loopback,
                         is_one_shot=is_one_shot,
